@@ -11,7 +11,7 @@ jobs:
       - uses: AnarkisGaming/workshop@v1
         with:
           appID: 244850
-          publishedFileID: CHANGEME
+          publishedFileID: 2968529248
         env:
           STEAM_ACCOUNT_NAME: ${{ secrets.accountname }}
           STEAM_PASSWORD: ${{ secrets.password }}
