@@ -4,18 +4,18 @@ using System.Linq;
 using System.Text;
 using Sandbox.Definitions;
 using Sandbox.ModAPI;
-using ShipyardMod.ItemClasses;
-using ShipyardMod.Utility;
+using ScaffoldMod.ItemClasses;
+using ScaffoldMod.Utility;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.ModAPI;
 using VRageMath;
 
-namespace ShipyardMod.ProcessHandlers
+namespace ScaffoldMod.ProcessHandlers
 {
     public class ProcessLCDMenu : ProcessHandlerBase
     {
         private static readonly string FullName = typeof(ProcessLCDMenu).FullName;
-        private readonly Dictionary<ShipyardItem, StatInfo> _stats = new Dictionary<ShipyardItem, StatInfo>();
+        private readonly Dictionary<ScaffoldItem, StatInfo> _stats = new Dictionary<ScaffoldItem, StatInfo>();
 
         private int _updateCount;
 
@@ -36,7 +36,7 @@ namespace ShipyardMod.ProcessHandlers
 
         public override void Handle()
         {
-            foreach (ShipyardItem item in ProcessShipyardDetection.ShipyardsList)
+            foreach (ScaffoldItem item in ProcessScaffoldDetection.ScaffoldsList)
             {
                 if (item.Menu != null)
                 {
@@ -68,7 +68,7 @@ namespace ShipyardMod.ProcessHandlers
                         if (panel == null)
                             continue;
 
-                        if (!panel.CustomName.ToLower().Contains("shipyard"))
+                        if (!panel.CustomName.ToLower().Contains("Scaffold"))
                             continue;
 
                         var bound = new BoundingSphereD(panel.GetPosition(), 5);
@@ -106,8 +106,8 @@ namespace ShipyardMod.ProcessHandlers
                                                  mainMenu.Add(new MenuItem("Scan", "", ScanDel(item.Menu, scanMenu)));
                                                  statusMenu.root = item.Menu;
                                                  statusMenu.Add(new MenuItem("Stop", "", StopDel(item.Menu, mainMenu)));
-                                                 scanMenu.Add(new MenuItem("Grind", "", ScanDel(item.Menu, grindStatsMenu, ShipyardType.Scanning)));
-                                                 scanMenu.Add(new MenuItem("Weld", "", ScanDel(item.Menu, weldStatsMenu, ShipyardType.Scanning)));
+                                                 scanMenu.Add(new MenuItem("Grind", "", ScanDel(item.Menu, grindStatsMenu, ScaffoldType.Scanning)));
+                                                 scanMenu.Add(new MenuItem("Weld", "", ScanDel(item.Menu, weldStatsMenu, ScaffoldType.Scanning)));
                                                  grindStatsMenu.Add(returnMenu);
                                                  weldStatsMenu.Add(returnMenu);
                                                  item.Menu.Root = mainMenu;
@@ -127,23 +127,23 @@ namespace ShipyardMod.ProcessHandlers
             }
         }
 
-        public string FormatStatus(ShipyardItem item)
+        public string FormatStatus(ScaffoldItem item)
         {
             bool welding = false;
             var result = new StringBuilder();
 
-            result.Append("Shipyard Status:\r\n");
+            result.Append("Scaffold Status:\r\n");
             switch (item.YardType)
             {
-                case ShipyardType.Disabled:
+                case ScaffoldType.Disabled:
                     result.Append("IDLE");
                     break;
 
-                case ShipyardType.Grind:
+                case ScaffoldType.Grind:
                     result.Append("GRINDING");
                     break;
 
-                case ShipyardType.Weld:
+                case ScaffoldType.Weld:
                     result.Append("WELDING");
                     welding = true;
                     break;
@@ -167,7 +167,7 @@ namespace ShipyardMod.ProcessHandlers
 
             float time = 0f;
 
-            if (item.YardType == ShipyardType.Grind)
+            if (item.YardType == ScaffoldType.Grind)
             {
                 foreach (BlockTarget target in item.TargetBlocks)
                 {
@@ -204,7 +204,7 @@ namespace ShipyardMod.ProcessHandlers
             return result.ToString();
         }
 
-        private string FormatGrindStats(ShipyardItem item)
+        private string FormatGrindStats(ScaffoldItem item)
         {
             if (!_stats.ContainsKey(item))
                 _stats.Add(item, new StatInfo());
@@ -235,7 +235,7 @@ namespace ShipyardMod.ProcessHandlers
                                                                   foreach (IMySlimBlock block in blockList)
                                                                   {
                                                                       //var blockDef = (MyObjectBuilder_CubeBlockDefinition)block.BlockDefinition.GetObjectBuilder();
-                                                                      //grindTime += Math.Max(blockDef.BuildTimeSeconds / ShipyardSettings.Instance.GrindMultiplier, 0.5f);
+                                                                      //grindTime += Math.Max(blockDef.BuildTimeSeconds / ScaffoldSettings.Instance.GrindMultiplier, 0.5f);
 
                                                                       var blockDef = (MyCubeBlockDefinition)block.BlockDefinition;
                                                                       //IntegrityPointsPerSec = MaxIntegrity / BuildTimeSeconds
@@ -277,7 +277,7 @@ namespace ShipyardMod.ProcessHandlers
                                                                   result.Append("Estimated Deconstruct Time: " + grindTime.ToString("0.00") + "s");
                                                               result.Append("\r\n");
                                                               result.Append("Estimated Component Gain:\r\n\r\n");
-                                                              double multiplier = Math.Max(item.ShipyardBox.HalfExtent.LengthSquared() / 200000, 1);
+                                                              double multiplier = Math.Max(item.ScaffoldBox.HalfExtent.LengthSquared() / 200000, 1);
                                                               foreach (KeyValuePair<string, int> component in stats.TotalComponents)
                                                               {
                                                                   if (component.Value != 0)
@@ -299,7 +299,7 @@ namespace ShipyardMod.ProcessHandlers
             return "SCANNING...\r\n\r\n";
         }
 
-        private string FormatWeldStats(ShipyardItem item)
+        private string FormatWeldStats(ScaffoldItem item)
         {
             if (!_stats.ContainsKey(item))
                 _stats.Add(item, new StatInfo());
@@ -355,7 +355,7 @@ namespace ShipyardMod.ProcessHandlers
                                                                   foreach (IMySlimBlock block in blockList)
                                                                   {
                                                                       //var blockDef = (MyObjectBuilder_CubeBlockDefinition)block.BlockDefinition.GetObjectBuilder();
-                                                                      //grindTime += Math.Max(blockDef.BuildTimeSeconds / ShipyardSettings.Instance.GrindMultiplier, 0.5f);
+                                                                      //grindTime += Math.Max(blockDef.BuildTimeSeconds / ScaffoldSettings.Instance.GrindMultiplier, 0.5f);
 
                                                                       var blockDef = (MyCubeBlockDefinition)block.BlockDefinition;
                                                                       //IntegrityPointsPerSec = MaxIntegrity / BuildTimeSeconds
@@ -411,7 +411,7 @@ namespace ShipyardMod.ProcessHandlers
                                                               if (stats.TotalComponents.Any())
                                                               {
                                                                   result.Append("Estimated Components Used:\r\n\r\n");
-                                                                  double multiplier = Math.Max(item.ShipyardBox.HalfExtent.LengthSquared() / 200000, 1);
+                                                                  double multiplier = Math.Max(item.ScaffoldBox.HalfExtent.LengthSquared() / 200000, 1);
                                                                   foreach (KeyValuePair<string, int> component in stats.TotalComponents)
                                                                   {
                                                                       if (component.Value != 0)
@@ -434,10 +434,10 @@ namespace ShipyardMod.ProcessHandlers
             return "SCANNING...";
         }
 
-        private string FormatMainMenu(ShipyardItem item)
+        private string FormatMainMenu(ScaffoldItem item)
         {
             var result = new StringBuilder();
-            result.Append("Automated Shipyard Main Menu\r\n\r\n");
+            result.Append("Automated Scaffold Main Menu\r\n\r\n");
             result.Append("Current targets: " + item.ContainsGrids.Count);
             result.Append("\r\n\r\n");
 
@@ -454,7 +454,7 @@ namespace ShipyardMod.ProcessHandlers
                                               long id = root.Panel.CubeGrid.EntityId;
 
                                               root.SetCurrentItem(item);
-                                              Communication.SendYardCommand(id, ShipyardType.Weld);
+                                              Communication.SendYardCommand(id, ScaffoldType.Weld);
                                           };
             return handler;
         }
@@ -466,12 +466,12 @@ namespace ShipyardMod.ProcessHandlers
                                               long id = root.Panel.CubeGrid.EntityId;
 
                                               root.SetCurrentItem(item);
-                                              Communication.SendYardCommand(id, ShipyardType.Grind);
+                                              Communication.SendYardCommand(id, ScaffoldType.Grind);
                                           };
             return handler;
         }
 
-        private MenuItem.MenuAction ScanDel(LCDMenu root, MenuItem item, ShipyardType? itemType = null)
+        private MenuItem.MenuAction ScanDel(LCDMenu root, MenuItem item, ScaffoldType? itemType = null)
         {
             MenuItem.MenuAction handler = () =>
                                           {
@@ -481,7 +481,7 @@ namespace ShipyardMod.ProcessHandlers
                                               if (itemType.HasValue)
                                                   Communication.SendYardCommand(id, itemType.Value);
                                               if (itemType == 0)
-                                                  foreach (ShipyardItem yard in ProcessShipyardDetection.ShipyardsList)
+                                                  foreach (ScaffoldItem yard in ProcessScaffoldDetection.ScaffoldsList)
                                                   {
                                                       if (yard.EntityId == id)
                                                       {
@@ -500,7 +500,7 @@ namespace ShipyardMod.ProcessHandlers
                                               long id = root.Panel.CubeGrid.EntityId;
 
                                               root.SetCurrentItem(item);
-                                              Communication.SendYardCommand(id, ShipyardType.Disabled);
+                                              Communication.SendYardCommand(id, ScaffoldType.Disabled);
                                           };
             return handler;
         }
@@ -509,7 +509,7 @@ namespace ShipyardMod.ProcessHandlers
         {
             MenuItem.DescriptionAction handler = () =>
                                                  {
-                                                     foreach (ShipyardItem item in ProcessShipyardDetection.ShipyardsList)
+                                                     foreach (ScaffoldItem item in ProcessScaffoldDetection.ScaffoldsList)
                                                      {
                                                          if (item.EntityId == id)
                                                              return FormatStatus(item);
@@ -523,7 +523,7 @@ namespace ShipyardMod.ProcessHandlers
         {
             MenuItem.DescriptionAction handler = () =>
                                                  {
-                                                     foreach (ShipyardItem item in ProcessShipyardDetection.ShipyardsList)
+                                                     foreach (ScaffoldItem item in ProcessScaffoldDetection.ScaffoldsList)
                                                      {
                                                          if (item.EntityId == id)
                                                              return FormatGrindStats(item);
@@ -537,7 +537,7 @@ namespace ShipyardMod.ProcessHandlers
         {
             MenuItem.DescriptionAction handler = () =>
                                                  {
-                                                     foreach (ShipyardItem item in ProcessShipyardDetection.ShipyardsList)
+                                                     foreach (ScaffoldItem item in ProcessScaffoldDetection.ScaffoldsList)
                                                      {
                                                          if (item.EntityId == id)
                                                              return FormatWeldStats(item);
@@ -551,7 +551,7 @@ namespace ShipyardMod.ProcessHandlers
         {
             MenuItem.DescriptionAction handler = () =>
                                                  {
-                                                     foreach (ShipyardItem item in ProcessShipyardDetection.ShipyardsList)
+                                                     foreach (ScaffoldItem item in ProcessScaffoldDetection.ScaffoldsList)
                                                      {
                                                          if (item.EntityId == id)
                                                              return FormatMainMenu(item);

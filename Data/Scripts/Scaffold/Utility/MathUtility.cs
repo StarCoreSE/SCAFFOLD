@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using ShipyardMod.ItemClasses;
+using ScaffoldMod.ItemClasses;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
 
-namespace ShipyardMod.Utility
+namespace ScaffoldMod.Utility
 {
     public static class MathUtility
     {

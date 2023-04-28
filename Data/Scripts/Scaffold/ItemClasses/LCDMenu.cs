@@ -7,7 +7,7 @@ using SpaceEngineers.Game.ModAPI;
 
 //Jimmacle provided the original LCD classes. These are heavily modified :P
 
-namespace ShipyardMod.ItemClasses
+namespace ScaffoldMod.ItemClasses
 {
     public class LCDMenu
     {

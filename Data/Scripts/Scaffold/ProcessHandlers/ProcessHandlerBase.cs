@@ -1,7 +1,7 @@
 ﻿using System;
 using Sandbox.ModAPI;
 
-namespace ShipyardMod.ProcessHandlers
+namespace ScaffoldMod.ProcessHandlers
 {
     public abstract class ProcessHandlerBase
     {

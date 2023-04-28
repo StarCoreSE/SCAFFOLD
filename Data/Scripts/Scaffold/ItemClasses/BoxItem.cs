@@ -1,6 +1,6 @@
 ﻿using VRageMath;
 
-namespace ShipyardMod.ItemClasses
+namespace ScaffoldMod.ItemClasses
 {
     public class BoxItem
     {

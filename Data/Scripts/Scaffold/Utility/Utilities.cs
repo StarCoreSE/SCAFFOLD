@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using ParallelTasks;
 using Sandbox.ModAPI;
-using ShipyardMod.ItemClasses;
-using ShipyardMod.ProcessHandlers;
+using ScaffoldMod.ItemClasses;
+using ScaffoldMod.ProcessHandlers;
 using VRage;
 using VRage.Collections;
 using VRage.Game;
@@ -12,7 +12,7 @@ using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
 
-namespace ShipyardMod.Utility
+namespace ScaffoldMod.Utility
 {
     public static class Utilities
     {
@@ -50,7 +50,7 @@ namespace ShipyardMod.Utility
                                                               {
                                                                   Logging.Instance.WriteLine("Exception on blocking game thread invocation: " + ex);
 
-                                                                  if (!SessionClosing && ShipyardCore.Debug)
+                                                                  if (!SessionClosing && ScaffoldCore.Debug)
                                                                       throw;
                                                               }
                                                               finally
@@ -64,7 +64,7 @@ namespace ShipyardMod.Utility
                 Logging.Instance.WriteLine("Exception in Utilities.InvokeBlocking: " + ex);
                 threadLock.ReleaseExclusive();
 
-                if (!SessionClosing && ShipyardCore.Debug)
+                if (!SessionClosing && ScaffoldCore.Debug)
                     throw;
             }
 
@@ -94,7 +94,7 @@ namespace ShipyardMod.Utility
                                                               catch (Exception ex)
                                                               {
                                                                   Logging.Instance.WriteLine("Exception on game thread invocation: " + ex);
-                                                                  if (!SessionClosing && ShipyardCore.Debug)
+                                                                  if (!SessionClosing && ScaffoldCore.Debug)
                                                                       throw;
                                                               }
                                                           });
@@ -102,7 +102,7 @@ namespace ShipyardMod.Utility
             catch (Exception ex)
             {
                 Logging.Instance.WriteLine("Exception in Utilities.Invoke: " + ex);
-                if (!SessionClosing && ShipyardCore.Debug)
+                if (!SessionClosing && ScaffoldCore.Debug)
                     throw;
             }
         }
@@ -153,7 +153,7 @@ namespace ShipyardMod.Utility
                                                              catch (Exception ex)
                                                              {
                                                                  Logging.Instance.WriteLine("Exception in ProcessActionQueue: " + ex);
-                                                                 if (!SessionClosing && ShipyardCore.Debug)
+                                                                 if (!SessionClosing && ScaffoldCore.Debug)
                                                                      throw;
                                                              }
                                                              finally
@@ -204,16 +204,16 @@ namespace ShipyardMod.Utility
         }
 
         /// <summary>
-        ///     Finds the shipyard nearest to the given point
+        ///     Finds the Scaffold nearest to the given point
         /// </summary>
         /// <param name="target"></param>
         /// <returns></returns>
-        public static ShipyardItem GetNearestYard(Vector3D target)
+        public static ScaffoldItem GetNearestYard(Vector3D target)
         {
             double minDist = 0;
             IMyCubeBlock closestCorner = null;
 
-            foreach (ShipyardItem yard in ProcessShipyardDetection.ShipyardsList.ToArray())
+            foreach (ScaffoldItem yard in ProcessScaffoldDetection.ScaffoldsList.ToArray())
             {
                 foreach (IMyCubeBlock corner in yard.Tools)
                 {
@@ -227,7 +227,7 @@ namespace ShipyardMod.Utility
                 }
             }
 
-            foreach (ShipyardItem toVerify in ProcessShipyardDetection.ShipyardsList.ToArray())
+            foreach (ScaffoldItem toVerify in ProcessScaffoldDetection.ScaffoldsList.ToArray())
             {
                 if (toVerify.Tools.Contains(closestCorner))
                     return toVerify;

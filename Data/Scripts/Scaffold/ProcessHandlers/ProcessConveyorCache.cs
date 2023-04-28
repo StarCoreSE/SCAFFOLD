@@ -3,12 +3,12 @@ using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.Game.GameSystems;
 using Sandbox.ModAPI;
-using ShipyardMod.ItemClasses;
-using ShipyardMod.Utility;
+using ScaffoldMod.ItemClasses;
+using ScaffoldMod.Utility;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 
-namespace ShipyardMod.ProcessHandlers
+namespace ScaffoldMod.ProcessHandlers
 {
     public class ProcessConveyorCache : ProcessHandlerBase
     {
@@ -24,11 +24,11 @@ namespace ShipyardMod.ProcessHandlers
 
         public override void Handle()
         {
-            foreach (ShipyardItem item in ProcessShipyardDetection.ShipyardsList)
+            foreach (ScaffoldItem item in ProcessScaffoldDetection.ScaffoldsList)
             {
                 var grid = (IMyCubeGrid)item.YardEntity;
 
-                if (grid.Physics == null || grid.Closed || item.YardType == ShipyardType.Invalid)
+                if (grid.Physics == null || grid.Closed || item.YardType == ScaffoldType.Invalid)
                 {
                     item.ConnectedCargo.Clear();
                     continue;
@@ -76,8 +76,8 @@ namespace ShipyardMod.ProcessHandlers
                                                  if (disconnectedInventories.Contains(block) || item.ConnectedCargo.Contains(block))
                                                      continue;
 
-                                                 //to avoid shipyard corners pulling from each other. Circles are no fun.
-                                                 if (block.BlockDefinition.SubtypeName.Contains("ShipyardCorner"))
+                                                 //to avoid Scaffold corners pulling from each other. Circles are no fun.
+                                                 if (block.BlockDefinition.SubtypeName.Contains("ScaffoldCorner"))
                                                      continue;
 
                                                  //ignore reactors

@@ -7,10 +7,10 @@ using ParallelTasks;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
-using ShipyardMod.ItemClasses;
-using ShipyardMod.ProcessHandlers;
-using ShipyardMod.Settings;
-using ShipyardMod.Utility;
+using ScaffoldMod.ItemClasses;
+using ScaffoldMod.ProcessHandlers;
+using ScaffoldMod.Settings;
+using ScaffoldMod.Utility;
 using VRage.Collections;
 using VRage.Game;
 using VRage.Game.Components;
@@ -18,31 +18,13 @@ using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
 
-/* Hello there!
- * 
- * One of the best things about the SE modding community is sharing information, so
- * if you find something in here useful or interesting, feel free to use it in your own mod!
- * I just ask that you leave a comment saying something like 'shamelessly stolen from rexxar' :)
- * Or consider donating a few dollars at https://paypal.me/rexxar if you're able.
- * Or hell, even just leaving a comment on the mod page or the forum or wherever letting me know
- * you found an interesting tidbit in here is good enough for me.
- *  
- * This mod never would have happened without the huge amount of help from the other modders
- * in the KSH Discord server. Come hang out with some really cool people: https://discord.gg/Dqfhtuu
- * 
- * 
- * This mod is something I've wanted in the game since I started playing SE. I spent over 8
- * months on it, and I sincerely hope you enjoy it :)
- * 
- * <3 rexxar
- */
 
-namespace ShipyardMod
+namespace ScaffoldMod
 {
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation)]
-    public class ShipyardCore : MySessionComponentBase
+    public class ScaffoldCore : MySessionComponentBase
     {
-        private const string Version = "v3.0";
+        private const string Version = "v0.1";
 
         //TODO
         public static volatile bool Debug = false;
@@ -62,47 +44,44 @@ namespace ShipyardMod
             AddMessageHandler();
 
             _processHandlers = new ProcessHandlerBase[]
-                               {
-                                   new ProcessShipyardAction(),
-                                   new ProcessLocalYards(),
-                                   new ProcessLCDMenu(),
-                                   new ProcessShipyardDetection(),
-                                   new ProcessConveyorCache(),
-                               };
-
-            Logging.Instance.WriteLine($"Shipyard Script Initialized: {Version}");
-
-            if (!MyAPIGateway.Utilities.FileExistsInLocalStorage("notify.sav", typeof(ShipyardCore)))
             {
-                var w = MyAPIGateway.Utilities.WriteFileInLocalStorage("notify.sav", typeof(ShipyardCore));
-                w.Write("newJul");
-                w.Flush();
-                w.Close();
+        new ProcessScaffoldAction(),
+        new ProcessLocalYards(),
+        new ProcessLCDMenu(),
+        new ProcessScaffoldDetection(),
+        new ProcessConveyorCache(),
+            };
 
-                MyAPIGateway.Utilities.ShowNotification("Shipyards has updated. Enter '/shipyard new' to view the changelog", 5000, MyFontEnum.Green);
+            Logging.Instance.WriteLine($"Scaffold Initialized: {Version}");
+
+            if (!MyAPIGateway.Utilities.FileExistsInLocalStorage("notify.sav", typeof(ScaffoldCore)))
+            {
+                var w = MyAPIGateway.Utilities.WriteFileInLocalStorage("notify.sav", typeof(ScaffoldCore));
+                w.Write("newJul"); w.Flush(); w.Close();
+                MyAPIGateway.Utilities.ShowNotification("Scaffolds updated. Enter '/Scaffold new' for changelog", 5000, MyFontEnum.Green);
             }
         }
 
         private void ShowLog()
         {
-            MyAPIGateway.Utilities.ShowMissionScreen("Shipyard Update", "", "July 2017",
+            MyAPIGateway.Utilities.ShowMissionScreen("Scaffold Update", "", "July 2017",
     @"Greetings engineers!
 
-The shipyard mod has received a major update, fixing many bugs and bringing some exciting new features!
+The Scaffold mod has received a major update, fixing many bugs and bringing some exciting new features!
 
 I've fixed welding projections that are connected to the shiypard grid, fractional components, strange power use, graphical issues, various multithreading issues, and more.
 
 Along with the projection fixes, there's a new option in the terminal which allows you to select a build pattern for projections. This is mostly a visual thing, but the results are interesting enough that it's worth having the option.
 
-Power use has been rebalanced and reduced drastically. Component efficiency hasn't changed. As another balancing requirement, shipyard corners now require a Targeting Computer component, which is built with Platinum.
+Power use has been rebalanced and reduced drastically. Component efficiency hasn't changed. As another balancing requirement, Scaffold corners now require a Targeting Computer component, which is built with Platinum.
 
 Most notably I've added a mobile version of the shiypard. It works the same as the normal fixed version, but requires much more power, and has a much lower component efficiency.
 
-Mobile shipyards include a slight tractor beam effect, helping your fighters match speed to the shipyard so you can make repairs while under way, and also include an advanced locking feature.
-This feature will lock grids inside mobile shipyards, but will consume a lot of power to maintain if you are doing hard maneuvers.
+Mobile Scaffolds include a slight tractor beam effect, helping your fighters match speed to the Scaffold so you can make repairs while under way, and also include an advanced locking feature.
+This feature will lock grids inside mobile Scaffolds, but will consume a lot of power to maintain if you are doing hard maneuvers.
 
 I hope you enjoy this update. Please visit the workshop and rate, subscribe, upvote, downvote, sing a jaunty tune, whatever it is that kids do these days.
-You can open the workshop page by sending '/shipyard workshop' in chat.
+You can open the workshop page by sending '/Scaffold workshop' in chat.
 
 Happy engineering!
 
@@ -113,29 +92,29 @@ Happy engineering!
         {
             string messageLower = messageText.ToLower();
             
-            if (!messageLower.StartsWith("/shipyard"))
+            if (!messageLower.StartsWith("/Scaffold"))
                 return;
 
             if (DateTime.Now - _lastMessageTime < TimeSpan.FromMilliseconds(200))
                 return;
 
-            if (messageLower.Equals("/shipyard debug on"))
+            if (messageLower.Equals("/Scaffold debug on"))
             {
                 Logging.Instance.WriteLine("Debug turned on");
                 Debug = true;
             }
-            else if (messageLower.Equals("/shipyard debug off"))
+            else if (messageLower.Equals("/Scaffold debug off"))
             {
                 Logging.Instance.WriteLine("Debug turned off");
                 Debug = false;
             }
-            else if (messageLower.Equals("/shipyard new"))
+            else if (messageLower.Equals("/Scaffold new"))
             {
                 sendToOthers = false;
                 ShowLog();
                 return;
             }
-            else if (messageLower.Equals("/shipyard workshop"))
+            else if (messageLower.Equals("/Scaffold workshop"))
             {
                 MyVisualScriptLogicProvider.OpenSteamOverlay(@"http://steamcommunity.com/sharedfiles/filedetails/?id=684618597");
                 sendToOthers = false;
@@ -158,11 +137,11 @@ Happy engineering!
 
         private void CalculateBoxesContaining()
         {
-            foreach (ShipyardItem item in ProcessLocalYards.LocalYards)
+            foreach (ScaffoldItem item in ProcessLocalYards.LocalYards)
             {
                 foreach (IMyCubeGrid grid in item.ContainsGrids)
                 {
-                    if (item.YardType != ShipyardType.Disabled || grid.Closed || !ShipyardSettings.Instance.GetYardSettings(item.EntityId).GuideEnabled)
+                    if (item.YardType != ScaffoldType.Disabled || grid.Closed || !ScaffoldSettings.Instance.GetYardSettings(item.EntityId).GuideEnabled)
                     {
                         BoxDict.Remove(grid.EntityId);
                         continue;
@@ -205,7 +184,7 @@ Happy engineering!
             {
                 foreach (IMyCubeGrid grid in item.IntersectsGrids)
                 {
-                    if (item.YardType != ShipyardType.Disabled || grid.Closed || !ShipyardSettings.Instance.GetYardSettings(item.EntityId).GuideEnabled)
+                    if (item.YardType != ScaffoldType.Disabled || grid.Closed || !ScaffoldSettings.Instance.GetYardSettings(item.EntityId).GuideEnabled)
                     {
                         BoxDict.Remove(grid.EntityId);
                         continue;
@@ -298,7 +277,7 @@ Happy engineering!
             catch (Exception ex)
             {
                 Logging.Instance.WriteLine($"Draw(): {ex}");
-                MyLog.Default.WriteLineAndConsole("##SHIPYARD MOD: ENCOUNTERED ERROR DURING DRAW UPDATE. CHECK MOD LOG");
+                MyLog.Default.WriteLineAndConsole("##Scaffold MOD: ENCOUNTERED ERROR DURING DRAW UPDATE. CHECK MOD LOG");
                 if (Debug)
                     throw;
             }
@@ -319,7 +298,7 @@ Happy engineering!
                 
                 RunProcessHandlers();
 
-                foreach (var item in ProcessShipyardDetection.ShipyardsList)
+                foreach (var item in ProcessScaffoldDetection.ScaffoldsList)
                 {
                     if (item.StaticYard)
                     {
@@ -351,7 +330,7 @@ Happy engineering!
             catch (Exception ex)
             {
                 Logging.Instance.WriteLine($"UpdateBeforeSimulation(): {ex}");
-                MyLog.Default.WriteLineAndConsole("##SHIPYARD MOD: ENCOUNTERED ERROR DURING MOD UPDATE. CHECK MOD LOG");
+                MyLog.Default.WriteLineAndConsole("##Scaffold MOD: ENCOUNTERED ERROR DURING MOD UPDATE. CHECK MOD LOG");
                 if (Debug)
                     throw;
             }
@@ -364,7 +343,7 @@ Happy engineering!
             if (character == null)
                 return;
 
-            var damageBlock = Profiler.Start("0.ShipyardMod.ShipyardCore", nameof(CheckAndDamagePlayer));
+            var damageBlock = Profiler.Start("0.ScaffoldMod.ScaffoldCore", nameof(CheckAndDamagePlayer));
             BoundingBoxD charbox = character.WorldAABB;
 
             MyAPIGateway.Parallel.ForEach(Communication.LineDict.Values.ToArray(), lineList =>
@@ -394,8 +373,8 @@ Happy engineering!
             //exceptions are suppressed in tasks, so re-throw if one happens
             if (_task.Exceptions != null && _task.Exceptions.Length > 0)
             {
-                MyLog.Default.WriteLineAndConsole("##SHIPYARD MOD: THREAD EXCEPTION, CHECK MOD LOG FOR MORE INFO.");
-                MyLog.Default.WriteLineAndConsole("##SHIPYARD MOD: EXCEPTION: " + _task.Exceptions[0]);
+                MyLog.Default.WriteLineAndConsole("##Scaffold MOD: THREAD EXCEPTION, CHECK MOD LOG FOR MORE INFO.");
+                MyLog.Default.WriteLineAndConsole("##Scaffold MOD: EXCEPTION: " + _task.Exceptions[0]);
                 if (Debug)
                     throw _task.Exceptions[0];
             }
@@ -406,7 +385,7 @@ Happy engineering!
                                                     string handlerName = "";
                                                     try
                                                     {
-                                                        var processBlock = Profiler.Start("0.ShipyardMod.ShipyardCore", nameof(RunProcessHandlers));
+                                                        var processBlock = Profiler.Start("0.ScaffoldMod.ScaffoldCore", nameof(RunProcessHandlers));
                                                         foreach (ProcessHandlerBase handler in _processHandlers)
                                                         {
                                                             if (handler.CanRun())
@@ -460,7 +439,7 @@ Happy engineering!
 
                     line.LinePackets?.DrawPackets();
 
-                    MySimpleObjectDraw.DrawLine(line.Start, line.End, MyStringId.GetOrCompute("ShipyardLaser"), ref line.Color, 0.4f);
+                    MySimpleObjectDraw.DrawLine(line.Start, line.End, MyStringId.GetOrCompute("ScaffoldLaser"), ref line.Color, 0.4f);
                 }
             }
 
@@ -470,14 +449,14 @@ Happy engineering!
                 Vector4 color = new Color(box.PackedColor).ToVector4();
                 foreach (LineItem line in box.Lines)
                 {
-                    MySimpleObjectDraw.DrawLine(line.Start, line.End, MyStringId.GetOrCompute("ShipyardGizmo"), ref color, 1f);
+                    MySimpleObjectDraw.DrawLine(line.Start, line.End, MyStringId.GetOrCompute("ScaffoldGizmo"), ref color, 1f);
                 }
             }
 
-            foreach (ShipyardItem item in ProcessLocalYards.LocalYards)
+            foreach (ScaffoldItem item in ProcessLocalYards.LocalYards)
             {
                 Vector4 color = Color.White;
-                if (item.YardType == ShipyardType.Disabled || item.YardType == ShipyardType.Invalid)
+                if (item.YardType == ScaffoldType.Disabled || item.YardType == ScaffoldType.Invalid)
                     continue;
 
                 foreach (LineItem line in item.BoxLines)
@@ -498,7 +477,7 @@ Happy engineering!
             drawColor.W = (float)((Math.Sin(item.PulseVal) + 1) / 2);
             if (drawColor.W <= 0.05)
                 item.Descend = !item.Descend;
-            MySimpleObjectDraw.DrawLine(item.Start, item.End, MyStringId.GetOrCompute("ShipyardLaser"), ref drawColor, drawColor.W * 0.4f);
+            MySimpleObjectDraw.DrawLine(item.Start, item.End, MyStringId.GetOrCompute("ScaffoldLaser"), ref drawColor, drawColor.W * 0.4f);
         }
 
         private void FadeLines()
@@ -517,7 +496,7 @@ Happy engineering!
                 Vector4 drawColor = line.Color;
                 //do a cubic fade out
                 drawColor.W = line.FadeVal * line.FadeVal * line.FadeVal;
-                MySimpleObjectDraw.DrawLine(line.Start, line.End, MyStringId.GetOrCompute("ShipyardLaser"), ref drawColor, drawColor.W * 0.4f);
+                MySimpleObjectDraw.DrawLine(line.Start, line.End, MyStringId.GetOrCompute("ScaffoldLaser"), ref drawColor, drawColor.W * 0.4f);
             }
 
             foreach (LineItem removeLine in linesToRemove)
@@ -542,7 +521,7 @@ Happy engineering!
 
                 Communication.UnregisterHandlers();
 
-                foreach (ShipyardItem yard in ProcessShipyardDetection.ShipyardsList.ToArray())
+                foreach (ScaffoldItem yard in ProcessScaffoldDetection.ScaffoldsList.ToArray())
                     yard.Disable(false);
             }
             catch

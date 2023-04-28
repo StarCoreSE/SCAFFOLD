@@ -4,9 +4,9 @@
         <Definition xsi:type="MyObjectBuilder_PoweredCargoContainerDefinition">
             <Id>
                 <TypeId>Collector</TypeId>
-                <SubtypeId>ShipyardCorner_Large</SubtypeId>
+                <SubtypeId>ScaffoldCorner_Large</SubtypeId>
             </Id>
-            <DisplayName>ShipYard Test</DisplayName>
+            <DisplayName>Scaffold Test</DisplayName>
             <Icon>Textures\GUI\Icons\Cubes\collector.dds</Icon>
             <Description>Description_Collector</Description>
             <CubeSize>Large</CubeSize>
@@ -29,7 +29,7 @@
                 <Model BuildPercentUpperBound="0.66" File="Models\Cubes\Large\CollectorConstruction_2.mwm" />
                 <Model BuildPercentUpperBound="1.00" File="Models\Cubes\Large\CollectorConstruction_3.mwm" />
             </BuildProgressModels>
-            <BlockPairName>ShipyardCorner_Large_Block</BlockPairName>
+            <BlockPairName>ScaffoldCorner_Large_Block</BlockPairName>
             <EdgeType>Light</EdgeType>
             <BuildTimeSeconds>25</BuildTimeSeconds>
             <ResourceSinkGroup>Conveyors</ResourceSinkGroup>

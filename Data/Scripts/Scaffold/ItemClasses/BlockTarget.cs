@@ -2,15 +2,15 @@
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
-using ShipyardMod.Utility;
+using ScaffoldMod.Utility;
 using VRage.Game.ModAPI;
 using VRageMath;
 
-namespace ShipyardMod.ItemClasses
+namespace ScaffoldMod.ItemClasses
 {
     public class BlockTarget
     {
-        public BlockTarget(IMySlimBlock block, ShipyardItem item)
+        public BlockTarget(IMySlimBlock block, ScaffoldItem item)
         {
             Block = block;
             if (CubeGrid.Physics == null && Projector != null)

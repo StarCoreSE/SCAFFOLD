@@ -2,21 +2,21 @@
 using System.Linq;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
-using ShipyardMod.ItemClasses;
-using ShipyardMod.Settings;
-using ShipyardMod.Utility;
+using ScaffoldMod.ItemClasses;
+using ScaffoldMod.Settings;
+using ScaffoldMod.Utility;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
 
-namespace ShipyardMod.ProcessHandlers
+namespace ScaffoldMod.ProcessHandlers
 {
-    public class ProcessShipyardDetection : ProcessHandlerBase
+    public class ProcessScaffoldDetection : ProcessHandlerBase
     {
-        public static HashSet<ShipyardItem> ShipyardsList = new HashSet<ShipyardItem>();
+        public static HashSet<ScaffoldItem> ScaffoldsList = new HashSet<ScaffoldItem>();
         private readonly List<IMyCubeBlock> _corners = new List<IMyCubeBlock>();
-        private readonly string FullName = typeof(ProcessShipyardDetection).FullName;
+        private readonly string FullName = typeof(ProcessScaffoldDetection).FullName;
 
         public override int GetUpdateResolution()
         {
@@ -34,17 +34,17 @@ namespace ShipyardMod.ProcessHandlers
             MyAPIGateway.Entities.GetEntities(tmpEntities);
             if (tmpEntities.Count == 0)
             {
-                Logging.Instance.WriteLine("Failed to get list of entities in ShipyardDetection.");
+                Logging.Instance.WriteLine("Failed to get list of entities in ScaffoldDetection.");
                 return;
             }
 
             //copy the list of entities because concurrency
             IMyEntity[] entities = tmpEntities.ToArray();
 
-            //run through our current list of shipyards and make sure they're still valid
-            var itemsToRemove = new HashSet<ShipyardItem>();
+            //run through our current list of Scaffolds and make sure they're still valid
+            var itemsToRemove = new HashSet<ScaffoldItem>();
             var firstCheckBlock = Profiler.Start(FullName, nameof(Handle), "First Check");
-            foreach (ShipyardItem item in ShipyardsList)
+            foreach (ScaffoldItem item in ScaffoldsList)
             {
                 if (!AreToolsConnected(item.Tools))
                 {
@@ -52,7 +52,7 @@ namespace ShipyardMod.ProcessHandlers
                     item.Disable();
                     itemsToRemove.Add(item);
                     foreach(var tool in item.Tools)
-                        Communication.SendCustomInfo(tool.EntityId, "Invalid Shipyard: All tools must be on the same conveyor network!");
+                        Communication.SendCustomInfo(tool.EntityId, "Invalid Scaffold: All tools must be on the same conveyor network!");
                     continue;
                 }
 
@@ -81,12 +81,12 @@ namespace ShipyardMod.ProcessHandlers
                         itemsToRemove.Add(item);
                         item.Disable();
                         foreach (var tool in item.Tools)
-                            Communication.SendCustomInfo(tool.EntityId, "Invalid Shipyard: Shipyard must be anchored to voxels!");
+                            Communication.SendCustomInfo(tool.EntityId, "Invalid Scaffold: Scaffold must be anchored to voxels!");
                         continue;
                     }
                 }
 
-                if (item.Tools.Any(t => ((IMyTerminalBlock)t).CustomInfo.Contains("Invalid Shipyard")))
+                if (item.Tools.Any(t => ((IMyTerminalBlock)t).CustomInfo.Contains("Invalid Scaffold")))
                 {
                     foreach (var tool in item.Tools)
                         Communication.SendCustomInfo(tool.EntityId, string.Empty);
@@ -94,11 +94,11 @@ namespace ShipyardMod.ProcessHandlers
             }
             firstCheckBlock.End();
 
-            foreach (ShipyardItem item in itemsToRemove)
+            foreach (ScaffoldItem item in itemsToRemove)
             {
-                item.YardType = ShipyardType.Invalid;
+                item.YardType = ScaffoldType.Invalid;
                 Communication.SendYardState(item);
-                ShipyardsList.Remove(item);
+                ScaffoldsList.Remove(item);
             }
 
             foreach (IMyEntity entity in entities)
@@ -109,7 +109,7 @@ namespace ShipyardMod.ProcessHandlers
                 if (grid?.Physics == null || grid.Closed || grid.MarkedForClose )
                     continue;
 
-                if (ShipyardsList.Any(x => x.EntityId == entity.EntityId))
+                if (ScaffoldsList.Any(x => x.EntityId == entity.EntityId))
                     continue;
 
                 var gridBlocks = new List<IMySlimBlock>();
@@ -121,7 +121,7 @@ namespace ShipyardMod.ProcessHandlers
                     if (collector == null)
                         continue;
 
-                    if (collector.BlockDefinition.SubtypeId.StartsWith("ShipyardCorner"))
+                    if (collector.BlockDefinition.SubtypeId.StartsWith("ScaffoldCorner"))
                     {
                         _corners.Add(slimBlock.FatBlock);
                     }
@@ -130,26 +130,26 @@ namespace ShipyardMod.ProcessHandlers
                 if (_corners.Count != 8)
                 {
                     foreach (var tool in _corners)
-                        Communication.SendCustomInfo(tool.EntityId, $"Invalid Shipyard: Must be 8 corner blocks, there are {_corners.Count} on this grid!");
+                        Communication.SendCustomInfo(tool.EntityId, $"Invalid Scaffold: Must be 8 corner blocks, there are {_corners.Count} on this grid!");
                     continue;
                 }
 
                 if (_corners.Any(c => c.BlockDefinition.SubtypeId != _corners[0].BlockDefinition.SubtypeId))
                 {
                     foreach (var tool in _corners)
-                        Communication.SendCustomInfo(tool.EntityId, $"Invalid Shipyard: All 8 corner blocks must be the same type!");
+                        Communication.SendCustomInfo(tool.EntityId, $"Invalid Scaffold: All 8 corner blocks must be the same type!");
                     continue;
                 }
                 
                 using (Profiler.Start(FullName, nameof(Handle), "Static Check"))
                 {
-                    if (_corners[0].BlockDefinition.SubtypeId == "ShipyardCorner_Large" && !ShipyardCore.Debug)
+                    if (_corners[0].BlockDefinition.SubtypeId == "ScaffoldCorner_Large" && !ScaffoldCore.Debug)
                     {
                         if (!grid.IsStatic || !grid.IsInVoxels())
                         {
                             Logging.Instance.WriteDebug($"Yard {grid.EntityId} failed: Static check");
                             foreach (var tool in _corners)
-                                Communication.SendCustomInfo(tool.EntityId, "Invalid Shipyard: Shipyard must be anchored to voxels!");
+                                Communication.SendCustomInfo(tool.EntityId, "Invalid Scaffold: Scaffold must be anchored to voxels!");
                             continue;
                         }
                     }
@@ -162,16 +162,16 @@ namespace ShipyardMod.ProcessHandlers
                 MyOrientedBoundingBoxD testBox = MathUtility.CreateOrientedBoundingBox((IMyCubeGrid)entity, _corners.Select(x => x.GetPosition()).ToList(), 2.5);
 
                 Logging.Instance.WriteLine("Found yard");
-                var item = new ShipyardItem(
+                var item = new ScaffoldItem(
                     testBox,
                     _corners.ToArray(),
-                    ShipyardType.Disabled,
+                    ScaffoldType.Disabled,
                     entity);
-                item.Settings = ShipyardSettings.Instance.GetYardSettings(item.EntityId);
+                item.Settings = ScaffoldSettings.Instance.GetYardSettings(item.EntityId);
                 foreach (IMyCubeBlock tool in _corners)
                     item.BlocksToProcess.Add(tool.EntityId, new BlockTarget[3]);
 
-                ShipyardsList.Add(item);
+                ScaffoldsList.Add(item);
                 Communication.SendNewYard(item);
                 foreach (var tool in item.Tools)
                     Communication.SendCustomInfo(tool.EntityId, "");
@@ -239,16 +239,16 @@ namespace ShipyardMod.ProcessHandlers
         //    3----2  7----6
 
         /// <summary>
-        ///     Makes sure the shipyard has a complete frame made of shipyard conveyor blocks
+        ///     Makes sure the Scaffold has a complete frame made of Scaffold conveyor blocks
         /// </summary>
         /// <param name="item"></param>
         /// <returns></returns>
-        private bool IsFrameComplete(ShipyardItem item)
+        private bool IsFrameComplete(ScaffoldItem item)
         {
             using (Profiler.Start(FullName, nameof(IsFrameComplete)))
             {
                 var corners = new Vector3D[8];
-                item.ShipyardBox.GetCorners(corners, 0);
+                item.ScaffoldBox.GetCorners(corners, 0);
 
                 var gridCorners = new Vector3I[8];
                 for (int i = 0; i < 8; i++)
@@ -281,7 +281,7 @@ namespace ShipyardMod.ProcessHandlers
                         if (block == null)
                             return false;
 
-                        if (!block.BlockDefinition.Id.SubtypeName.Contains("Shipyard"))
+                        if (!block.BlockDefinition.Id.SubtypeName.Contains("Scaffold"))
                             return false;
 
                         if (block.BuildPercent() < .8)
@@ -317,7 +317,7 @@ namespace ShipyardMod.ProcessHandlers
                 {
                     Logging.Instance.WriteDebug($"Yard {entity.EntityId} failed: APO");
                     foreach (var tool in tools)
-                        Communication.SendCustomInfo(tool.EntityId, "Invalid Shipyard: Corners not aligned!");
+                        Communication.SendCustomInfo(tool.EntityId, "Invalid Scaffold: Corners not aligned!");
                     return false;
                 }
 
@@ -325,7 +325,7 @@ namespace ShipyardMod.ProcessHandlers
                 {
                     Logging.Instance.WriteDebug($"Yard {entity.EntityId} failed: ATC");
                     foreach (var tool in tools)
-                        Communication.SendCustomInfo(tool.EntityId, "Invalid Shipyard: All tools must be on the same conveyor network!");
+                        Communication.SendCustomInfo(tool.EntityId, "Invalid Scaffold: All tools must be on the same conveyor network!");
                     return false;
                 }
 

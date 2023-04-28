@@ -3,18 +3,18 @@ using System.Linq;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
-using ShipyardMod.ItemClasses;
-using ShipyardMod.Utility;
+using ScaffoldMod.ItemClasses;
+using ScaffoldMod.Utility;
 using VRage.Collections;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
 
-namespace ShipyardMod.ProcessHandlers
+namespace ScaffoldMod.ProcessHandlers
 {
     internal class ProcessLocalYards : ProcessHandlerBase
     {
-        public static MyConcurrentHashSet<ShipyardItem> LocalYards = new MyConcurrentHashSet<ShipyardItem>();
+        public static MyConcurrentHashSet<ScaffoldItem> LocalYards = new MyConcurrentHashSet<ScaffoldItem>();
         private static readonly string FullName = typeof(ProcessLocalYards).FullName;
 
         public override int GetUpdateResolution()
@@ -35,12 +35,12 @@ namespace ShipyardMod.ProcessHandlers
         public override void Handle()
         {
             Logging.Instance.WriteDebug("ProcessLocalYards Start");
-            var removeYards = new HashSet<ShipyardItem>();
+            var removeYards = new HashSet<ScaffoldItem>();
 
-            foreach (ShipyardItem item in LocalYards)
+            foreach (ScaffoldItem item in LocalYards)
             {
-                //see if the shipyard has been deleted
-                if (item.YardEntity.Closed || item.YardEntity.Physics == null || item.YardType == ShipyardType.Invalid
+                //see if the Scaffold has been deleted
+                if (item.YardEntity.Closed || item.YardEntity.Physics == null || item.YardType == ScaffoldType.Invalid
                     || (item.StaticYard && !item.YardEntity.Physics.IsStatic))
                 {
                     //the client shouldn't tell the server the yard is invalid
@@ -53,14 +53,14 @@ namespace ShipyardMod.ProcessHandlers
                     UpdateBoxLines(item);
 
                 //don't draw boxes inside active yards, it's distracting
-                if (item.YardType != ShipyardType.Disabled)
+                if (item.YardType != ScaffoldType.Disabled)
                     continue;
 
                 var corners = new Vector3D[8];
-                item.ShipyardBox.GetCorners(corners, 0);
-                double dist = Vector3D.DistanceSquared(corners[0], item.ShipyardBox.Center);
+                item.ScaffoldBox.GetCorners(corners, 0);
+                double dist = Vector3D.DistanceSquared(corners[0], item.ScaffoldBox.Center);
 
-                var sphere = new BoundingSphereD(item.ShipyardBox.Center, dist);
+                var sphere = new BoundingSphereD(item.ScaffoldBox.Center, dist);
 
                 //Utilities.InvokeBlocking(()=> entities = MyAPIGateway.Entities.GetTopMostEntitiesInSphere(ref sphere));
                 List<IMyEntity> entities = MyAPIGateway.Entities.GetTopMostEntitiesInSphere(ref sphere);
@@ -97,7 +97,7 @@ namespace ShipyardMod.ProcessHandlers
                     MyOrientedBoundingBoxD gridBox = MathUtility.CreateOrientedBoundingBox(grid);
 
                     //check if the ship bounding box is completely inside the yard box
-                    ContainmentType result = item.ShipyardBox.Contains(ref gridBox);
+                    ContainmentType result = item.ScaffoldBox.Contains(ref gridBox);
 
                     if (result == ContainmentType.Contains)
                     {
@@ -125,21 +125,21 @@ namespace ShipyardMod.ProcessHandlers
 
                 foreach (IMyCubeGrid removeGrid in removeGrids)
                 {
-                    ShipyardCore.BoxDict.Remove(removeGrid.EntityId);
+                    ScaffoldCore.BoxDict.Remove(removeGrid.EntityId);
                     item.ContainsGrids.Remove(removeGrid);
                     item.IntersectsGrids.Remove(removeGrid);
                 }
             }
 
-            foreach (ShipyardItem removeItem in removeYards)
+            foreach (ScaffoldItem removeItem in removeYards)
             {
                 foreach (IMyCubeGrid grid in removeItem.ContainsGrids)
                 {
-                    ShipyardCore.BoxDict.Remove(grid.EntityId);
+                    ScaffoldCore.BoxDict.Remove(grid.EntityId);
                 }
                 foreach (IMyCubeGrid grid in removeItem.IntersectsGrids)
                 {
-                    ShipyardCore.BoxDict.Remove(grid.EntityId);
+                    ScaffoldCore.BoxDict.Remove(grid.EntityId);
                 }
 
                 LocalYards.Remove(removeItem);
@@ -156,11 +156,11 @@ namespace ShipyardMod.ProcessHandlers
         ///     Updates the internal list of lines so we only draw a laser if there is a frame to contain it
         /// </summary>
         /// <param name="item"></param>
-        private void UpdateBoxLines(ShipyardItem item)
+        private void UpdateBoxLines(ScaffoldItem item)
         {
             var lineBlock = Profiler.Start(FullName, nameof(UpdateBoxLines));
             var corners = new Vector3D[8];
-            item.ShipyardBox.GetCorners(corners, 0);
+            item.ScaffoldBox.GetCorners(corners, 0);
             var grid = (IMyCubeGrid)item.YardEntity;
 
             var gridCorners = new Vector3I[8];
@@ -212,7 +212,7 @@ namespace ShipyardMod.ProcessHandlers
                 if (block == null)
                     return false;
 
-                if (!block.BlockDefinition.Id.SubtypeName.Contains("Shipyard"))
+                if (!block.BlockDefinition.Id.SubtypeName.Contains("Scaffold"))
                     return false;
 
                 if (block.BuildPercent() < ((MyCubeBlockDefinition)block.BlockDefinition).CriticalIntegrityRatio)

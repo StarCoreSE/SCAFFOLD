@@ -6,7 +6,7 @@ using System.Linq;
 using System.Xml.Serialization;
 using Sandbox.ModAPI;
 
-namespace ShipyardMod.Utility
+namespace ScaffoldMod.Utility
 {
     public static class Profiler
     {
@@ -137,7 +137,7 @@ namespace ShipyardMod.Utility
 
         public static ProfilingBlockBase Start(string className, string memberName = null, string blockName = null)
         {
-            if(!ShipyardCore.Debug)
+            if(!ScaffoldCore.Debug)
                 return EmptyBlock;
 
             string[] splits = className.Split('.');

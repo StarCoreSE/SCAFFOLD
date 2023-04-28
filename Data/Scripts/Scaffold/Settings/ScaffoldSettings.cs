@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Xml.Serialization;
 using Sandbox.ModAPI;
-using ShipyardMod.Utility;
+using ScaffoldMod.Utility;
 using VRage.Serialization;
 
-namespace ShipyardMod.Settings
+namespace ScaffoldMod.Settings
 {
     public enum BuildPatternEnum : byte
     {
@@ -36,18 +36,18 @@ namespace ShipyardMod.Settings
     }
 
     [XmlInclude(typeof(YardSettingsStruct))]
-    public class ShipyardSettings
+    public class ScaffoldSettings
     {
-        private static ShipyardSettings _instance;
+        private static ScaffoldSettings _instance;
 
         public SerializableDictionary<long, YardSettingsStruct> BlockSettings;
 
-        public ShipyardSettings()
+        public ScaffoldSettings()
         {
             BlockSettings = new SerializableDictionary<long, YardSettingsStruct>();
         }
 
-        public static ShipyardSettings Instance
+        public static ScaffoldSettings Instance
         {
             get
             {
@@ -55,7 +55,7 @@ namespace ShipyardMod.Settings
                     return _instance;
 
                 if (!Load())
-                    _instance = new ShipyardSettings();
+                    _instance = new ScaffoldSettings();
 
                 return _instance;
             }
@@ -81,7 +81,7 @@ namespace ShipyardMod.Settings
         {
             Logging.Instance.WriteLine("Saving settings");
             string serialized = MyAPIGateway.Utilities.SerializeToXML(this);
-            MyAPIGateway.Utilities.SetVariable("ShipyardSettings", serialized);
+            MyAPIGateway.Utilities.SetVariable("ScaffoldSettings", serialized);
             Logging.Instance.WriteLine("Done saving settings");
         }
 
@@ -91,12 +91,12 @@ namespace ShipyardMod.Settings
             try
             {
                 string value;
-                if (!MyAPIGateway.Utilities.GetVariable("ShipyardSettings", out value))
+                if (!MyAPIGateway.Utilities.GetVariable("ScaffoldSettings", out value))
                 {
                     Logging.Instance.WriteLine("Settings do not exist in world file");
                     return false;
                 }
-                _instance = MyAPIGateway.Utilities.SerializeFromXML<ShipyardSettings>(value);
+                _instance = MyAPIGateway.Utilities.SerializeFromXML<ScaffoldSettings>(value);
                 Logging.Instance.WriteLine("Done loading settings");
                 return true;
             }

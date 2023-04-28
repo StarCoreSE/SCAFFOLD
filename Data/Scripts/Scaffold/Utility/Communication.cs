@@ -5,16 +5,16 @@ using System.Text;
 using Sandbox.Definitions;
 using Sandbox.Game;
 using Sandbox.ModAPI;
-using ShipyardMod.ItemClasses;
-using ShipyardMod.ProcessHandlers;
-using ShipyardMod.Settings;
+using ScaffoldMod.ItemClasses;
+using ScaffoldMod.ProcessHandlers;
+using ScaffoldMod.Settings;
 using SpaceEngineers.Game.ModAPI;
 using VRage;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
 
-namespace ShipyardMod.Utility
+namespace ScaffoldMod.Utility
 {
     public class Communication
     {
@@ -41,11 +41,11 @@ namespace ShipyardMod.Utility
                         break;
 
                     case MessageTypeEnum.NewYard:
-                        HandleNewShipyard(newData);
+                        HandleNewScaffold(newData);
                         break;
 
                     case MessageTypeEnum.YardState:
-                        HandleShipyardState(newData);
+                        HandleScaffoldState(newData);
                         break;
 
                     case MessageTypeEnum.ClientChat:
@@ -64,8 +64,8 @@ namespace ShipyardMod.Utility
                         HandleClearLine(newData);
                         break;
 
-                    case MessageTypeEnum.ShipyardSettings:
-                        HandleShipyardSettings(newData);
+                    case MessageTypeEnum.ScaffoldSettings:
+                        HandleScaffoldSettings(newData);
                         break;
 
                     case MessageTypeEnum.YardCommand:
@@ -84,7 +84,7 @@ namespace ShipyardMod.Utility
                         HandleToolPower(newData);
                         break;
 
-                    case MessageTypeEnum.ShipyardCount:
+                    case MessageTypeEnum.ScaffoldCount:
                         HandleYardCount(newData);
                         break;
 
@@ -112,12 +112,12 @@ namespace ShipyardMod.Utility
             ServerChat,
             ServerDialog,
             ClearLine,
-            ShipyardSettings,
+            ScaffoldSettings,
             YardCommand,
             ButtonAction,
             RequestYard,
             ToolPower,
-            ShipyardCount,
+            ScaffoldCount,
             CustomInfo
         }
 
@@ -135,7 +135,7 @@ namespace ShipyardMod.Utility
         {
             public long GridId;
             public long[] ToolIds;
-            public ShipyardType YardType;
+            public ScaffoldType YardType;
             public long ButtonId;
         }
 
@@ -166,7 +166,7 @@ namespace ShipyardMod.Utility
             SendMessageToClients(MessageTypeEnum.ClearLine, data);
         }
 
-        public static void SendYardState(ShipyardItem item)
+        public static void SendYardState(ScaffoldItem item)
         {
             var data = new byte[sizeof(long) + 1];
             BitConverter.GetBytes(item.EntityId).CopyTo(data, 0);
@@ -175,7 +175,7 @@ namespace ShipyardMod.Utility
             SendMessageToClients(MessageTypeEnum.YardState, data);
         }
 
-        public static void SendNewYard(ShipyardItem item, ulong steamId = 0)
+        public static void SendNewYard(ScaffoldItem item, ulong steamId = 0)
         {
             Logging.Instance.WriteLine("Sent Yard");
             var newYard = new YardStruct
@@ -245,7 +245,7 @@ namespace ShipyardMod.Utility
             Utilities.Invoke(() => MyAPIGateway.Multiplayer.SendMessageTo(MESSAGE_ID, newData, steamId));
         }
 
-        public static void SendShipyardSettings(long entityId, YardSettingsStruct settings)
+        public static void SendScaffoldSettings(long entityId, YardSettingsStruct settings)
         {
             string message = MyAPIGateway.Utilities.SerializeToXML(settings);
             byte[] messageBytes = Encoding.UTF8.GetBytes(message);
@@ -255,7 +255,7 @@ namespace ShipyardMod.Utility
             BitConverter.GetBytes(entityId).CopyTo(data, 0);
             messageBytes.CopyTo(data, sizeof(long));
 
-            SendMessageToServer(MessageTypeEnum.ShipyardSettings, data);
+            SendMessageToServer(MessageTypeEnum.ScaffoldSettings, data);
         }
 
         public static void SendPrivateInfo(ulong steamId, string message)
@@ -280,7 +280,7 @@ namespace ShipyardMod.Utility
             SendMessageTo(MessageTypeEnum.ServerDialog, data, steamId);
         }
 
-        public static void SendYardCommand(long yardId, ShipyardType type)
+        public static void SendYardCommand(long yardId, ScaffoldType type)
         {
             var data = new byte[sizeof(long) + 1];
             BitConverter.GetBytes(yardId).CopyTo(data, 0);
@@ -303,7 +303,7 @@ namespace ShipyardMod.Utility
             SendMessageToServer(MessageTypeEnum.ButtonAction, data);
         }
 
-        public static void RequestShipyards()
+        public static void RequestScaffolds()
         {
             byte[] data = BitConverter.GetBytes(MyAPIGateway.Session.Player.SteamUserId);
             SendMessageToServer(MessageTypeEnum.RequestYard, data);
@@ -320,9 +320,9 @@ namespace ShipyardMod.Utility
 
         public static void SendYardCount()
         {
-            byte[] data = BitConverter.GetBytes(ProcessShipyardDetection.ShipyardsList.Count);
+            byte[] data = BitConverter.GetBytes(ProcessScaffoldDetection.ScaffoldsList.Count);
 
-            SendMessageToClients(MessageTypeEnum.ShipyardCount, data);
+            SendMessageToClients(MessageTypeEnum.ScaffoldCount, data);
         }
 
         public static void SendCustomInfo(long entityId, string info)
@@ -348,7 +348,7 @@ namespace ShipyardMod.Utility
             if (!MyAPIGateway.Entities.TryGetEntityById(blockId, out entity))
                 return;
 
-            ((IMyCollector)entity).GameLogic.GetAs<ShipyardCorner>().SetPowerUse(power);
+            ((IMyCollector)entity).GameLogic.GetAs<ScaffoldCorner>().SetPowerUse(power);
         }
 
         private static void HandleToolLine(byte[] data)
@@ -432,13 +432,13 @@ namespace ShipyardMod.Utility
                 LineDict[item.ToolId] = new List<LineItem>(3) {newLine};
         }
 
-        private static void HandleNewShipyard(byte[] data)
+        private static void HandleNewScaffold(byte[] data)
         {
             Logging.Instance.WriteLine("ReceivedYard");
             string message = Encoding.UTF8.GetString(data);
             var yardStruct = MyAPIGateway.Utilities.SerializeFromXML<YardStruct>(message);
 
-            //the server has already verified this shipyard. Don't question it, just make the shipyard item
+            //the server has already verified this Scaffold. Don't question it, just make the Scaffold item
             if (yardStruct.ToolIds.Length != 8)
                 return;
 
@@ -469,7 +469,7 @@ namespace ShipyardMod.Utility
 
             MyOrientedBoundingBoxD yardBox = MathUtility.CreateOrientedBoundingBox(yardGrid, points, 2.5);
 
-            var yardItem = new ShipyardItem(yardBox, tools.ToArray(), yardStruct.YardType, yardGrid);
+            var yardItem = new ScaffoldItem(yardBox, tools.ToArray(), yardStruct.YardType, yardGrid);
 
             if (MyAPIGateway.Entities.TryGetEntityById(yardStruct.ButtonId, out outEntity))
             {
@@ -491,34 +491,34 @@ namespace ShipyardMod.Utility
                 //buttons.SetEmissiveParts("Emissive3", blockDef.ButtonColors[3 % blockDef.ButtonColors.Length], 1);
                 //buttons.SetEmissiveParts("Emissive4", blockDef.ButtonColors[4 % blockDef.ButtonColors.Length], 1);
             }
-            yardItem.Settings = ShipyardSettings.Instance.GetYardSettings(yardItem.EntityId);
+            yardItem.Settings = ScaffoldSettings.Instance.GetYardSettings(yardItem.EntityId);
             ProcessLocalYards.LocalYards.Add(yardItem);
             var corners = new Vector3D[8];
-            yardItem.ShipyardBox.GetCorners(corners, 0);
-            //check ShipyardItem.UpdatePowerUse for details on this value
+            yardItem.ScaffoldBox.GetCorners(corners, 0);
+            //check ScaffoldItem.UpdatePowerUse for details on this value
             float maxpower = 5 + (float)Vector3D.DistanceSquared(corners[0], corners[6]) / 8;
             maxpower += 90;
 
             foreach (IMyCubeBlock tool in yardItem.Tools)
             {
-                var corner = ((IMyCollector)tool).GameLogic.GetAs<ShipyardCorner>();
+                var corner = ((IMyCollector)tool).GameLogic.GetAs<ScaffoldCorner>();
                 corner.SetMaxPower(maxpower);
-                corner.Shipyard = yardItem;
+                corner.Scaffold = yardItem;
                 //tool.SetEmissiveParts("Emissive1", Color.Yellow, 0f);
             }
-            yardItem.Settings = ShipyardSettings.Instance.GetYardSettings(yardItem.EntityId);
+            yardItem.Settings = ScaffoldSettings.Instance.GetYardSettings(yardItem.EntityId);
             ProcessLocalYards.LocalYards.Add(yardItem);
         }
 
-        private static void HandleShipyardState(byte[] data)
+        private static void HandleScaffoldState(byte[] data)
         {
             long gridId = BitConverter.ToInt64(data, 0);
-            var type = (ShipyardType)data.Last();
+            var type = (ScaffoldType)data.Last();
 
             Logging.Instance.WriteDebug("Got yard state: " + type);
             Logging.Instance.WriteDebug($"Details: {gridId} {ProcessLocalYards.LocalYards.Count} [{string.Join(" ", data)}]");
 
-            foreach (ShipyardItem yard in ProcessLocalYards.LocalYards)
+            foreach (ScaffoldItem yard in ProcessLocalYards.LocalYards)
             {
                 if (yard.EntityId != gridId)
                     continue;
@@ -527,12 +527,12 @@ namespace ShipyardMod.Utility
                 Logging.Instance.WriteLine(type.ToString());
 
                 foreach (IMyCubeBlock yardTool in yard.Tools)
-                    yardTool?.GameLogic?.GetAs<ShipyardCorner>()?.UpdateVisuals();
+                    yardTool?.GameLogic?.GetAs<ScaffoldCorner>()?.UpdateVisuals();
 
                 switch (type)
                 {
-                    case ShipyardType.Disabled:
-                    case ShipyardType.Invalid:
+                    case ScaffoldType.Disabled:
+                    case ScaffoldType.Invalid:
                         yard.Disable(false);
 
                         foreach (IMyCubeBlock tool in yard.Tools)
@@ -546,16 +546,16 @@ namespace ShipyardMod.Utility
                             //tool.SetEmissiveParts("Emissive0", Color.White, 0.5f);
                         }
                         break;
-                    case ShipyardType.Scanning:
+                    case ScaffoldType.Scanning:
                         ScanList.Add(new ScanAnimation(yard));
                         //foreach(var tool in yard.Tools)
                         //    tool.SetEmissiveParts("Emissive0", Color.Green, 0.5f);
                         break;
-                        //case ShipyardType.Weld:
+                        //case ScaffoldType.Weld:
                         //foreach (var tool in yard.Tools)
                         //    tool.SetEmissiveParts("Emissive0", Color.DarkCyan, 0.5f);
                         //break;
-                        //case ShipyardType.Grind:
+                        //case ScaffoldType.Grind:
                         //foreach (var tool in yard.Tools)
                         //    tool.SetEmissiveParts("Emissive0", Color.OrangeRed, 0.5f);
                         //break;
@@ -570,23 +570,23 @@ namespace ShipyardMod.Utility
         {
             ulong remoteSteamId = BitConverter.ToUInt64(data, 0);
             string command = Encoding.UTF8.GetString(data, sizeof(ulong), data.Length - sizeof(ulong));
-            if (!command.StartsWith("/shipyard"))
+            if (!command.StartsWith("/Scaffold"))
                 return;
 
             Logging.Instance.WriteLine("Received chat: " + command);
             if (MyAPIGateway.Session.IsUserAdmin(remoteSteamId))
             {
-                if (command.Equals("/shipyard debug on"))
+                if (command.Equals("/Scaffold debug on"))
                 {
                     Logging.Instance.WriteLine("Debug turned on");
-                    ShipyardCore.Debug = true;
+                    ScaffoldCore.Debug = true;
                 }
-                else if (command.Equals("/shipyard debug off"))
+                else if (command.Equals("/Scaffold debug off"))
                 {
                     Logging.Instance.WriteLine("Debug turned off");
-                    ShipyardCore.Debug = false;
+                    ScaffoldCore.Debug = false;
                 }
-                else if (command.Equals("/shipyard inventory"))
+                else if (command.Equals("/Scaffold inventory"))
                 {
                     Utilities.FixInventory();
                 }
@@ -611,7 +611,7 @@ namespace ShipyardMod.Utility
 
             string message = Encoding.ASCII.GetString(data);
 
-            MyAPIGateway.Utilities.ShowMessage("Shipyard Overlord", message);
+            MyAPIGateway.Utilities.ShowMessage("Scaffold Overlord", message);
         }
 
         private static void HandleServerDialog(byte[] data)
@@ -649,7 +649,7 @@ namespace ShipyardMod.Utility
                 LineDict[toolId].Remove(line);
         }
 
-        private static void HandleShipyardSettings(byte[] data)
+        private static void HandleScaffoldSettings(byte[] data)
         {
             long entityId = BitConverter.ToInt64(data, 0);
             string message = Encoding.UTF8.GetString(data, sizeof(long), data.Length - sizeof(long));
@@ -657,35 +657,35 @@ namespace ShipyardMod.Utility
 
             bool found = false;
 
-            Logging.Instance.WriteDebug($"Received shipyard settings:\r\n" +
+            Logging.Instance.WriteDebug($"Received Scaffold settings:\r\n" +
                                         $"\t{settings.EntityId}\r\n" +
                                         $"\t{settings.BeamCount}\r\n" +
                                         $"\t{settings.GuideEnabled}\r\n" +
                                         $"\t{settings.GrindMultiplier}\r\n" +
                                         $"\t{settings.WeldMultiplier}");
 
-            foreach (ShipyardItem yard in ProcessShipyardDetection.ShipyardsList)
+            foreach (ScaffoldItem yard in ProcessScaffoldDetection.ScaffoldsList)
             {
                 if (yard.EntityId != entityId)
                     continue;
 
                 yard.Settings = settings;
-                ShipyardSettings.Instance.SetYardSettings(yard.EntityId, settings);
+                ScaffoldSettings.Instance.SetYardSettings(yard.EntityId, settings);
                 found = true;
                 break;
             }
 
-            foreach (ShipyardItem yard in ProcessLocalYards.LocalYards)
+            foreach (ScaffoldItem yard in ProcessLocalYards.LocalYards)
             {
                 if (yard.EntityId != entityId)
                     continue;
 
                 yard.Settings = settings;
-                ShipyardSettings.Instance.SetYardSettings(yard.EntityId, settings);
+                ScaffoldSettings.Instance.SetYardSettings(yard.EntityId, settings);
                 
                 foreach (IMyCubeBlock tool in yard.Tools)
                 {
-                    tool.GameLogic.GetAs<ShipyardCorner>().UpdateVisuals();
+                    tool.GameLogic.GetAs<ScaffoldCorner>().UpdateVisuals();
                 }
                 
                 found = true;
@@ -694,25 +694,25 @@ namespace ShipyardMod.Utility
 
             if (found && MyAPIGateway.Multiplayer.IsServer)
             {
-                ShipyardSettings.Instance.Save();
+                ScaffoldSettings.Instance.Save();
                 //pass true to skip the local player
                 //on player-hosted MP we can get caught in an infinite loop if we don't
-                SendMessageToClients(MessageTypeEnum.ShipyardSettings, data, true);
+                SendMessageToClients(MessageTypeEnum.ScaffoldSettings, data, true);
             }
         }
 
         private static void HandleYardCommand(byte[] data)
         {
             long yardId = BitConverter.ToInt64(data, 0);
-            var type = (ShipyardType)data.Last();
+            var type = (ScaffoldType)data.Last();
             Logging.Instance.WriteDebug($"Received Yard Command: {type} for {yardId}");
 
-            foreach (ShipyardItem yard in ProcessShipyardDetection.ShipyardsList)
+            foreach (ScaffoldItem yard in ProcessScaffoldDetection.ScaffoldsList)
             {
                 if (yard.EntityId != yardId)
                     continue;
 
-                if (type == ShipyardType.Disabled || type == ShipyardType.Invalid)
+                if (type == ScaffoldType.Disabled || type == ScaffoldType.Invalid)
                     yard.Disable();
                 else
                     yard.Init(type);
@@ -726,7 +726,7 @@ namespace ShipyardMod.Utility
             long yardId = BitConverter.ToInt64(data, 0);
             byte index = data.Last();
 
-            foreach (ShipyardItem yard in ProcessShipyardDetection.ShipyardsList)
+            foreach (ScaffoldItem yard in ProcessScaffoldDetection.ScaffoldsList)
             {
                 if (yard.EntityId == yardId && yard.Menu != null)
                 {
@@ -740,12 +740,12 @@ namespace ShipyardMod.Utility
         {
             ulong steamId = BitConverter.ToUInt64(data, 0);
 
-            Logging.Instance.WriteLine("Recieved shipyard request from " + steamId);
+            Logging.Instance.WriteLine("Recieved Scaffold request from " + steamId);
 
-            if (!ProcessShipyardDetection.ShipyardsList.Any())
+            if (!ProcessScaffoldDetection.ScaffoldsList.Any())
                 return;
 
-            foreach (ShipyardItem yard in ProcessShipyardDetection.ShipyardsList)
+            foreach (ScaffoldItem yard in ProcessScaffoldDetection.ScaffoldsList)
                 SendNewYard(yard, steamId);
         }
 
@@ -758,7 +758,7 @@ namespace ShipyardMod.Utility
 
             if (ProcessLocalYards.LocalYards.Count != count)
             {
-                RequestShipyards();
+                RequestScaffolds();
             }
         }
 
@@ -775,7 +775,7 @@ namespace ShipyardMod.Utility
             if (col == null)
                 return;
 
-            col.GameLogic.GetAs<ShipyardCorner>()?.SetInfo(info);
+            col.GameLogic.GetAs<ScaffoldCorner>()?.SetInfo(info);
         }
 
         #endregion

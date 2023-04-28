@@ -5,7 +5,7 @@ using VRage.Game;
 using VRage.Utils;
 using VRageMath;
 
-namespace ShipyardMod.ItemClasses
+namespace ScaffoldMod.ItemClasses
 {
     public class PacketManager
     {
@@ -59,7 +59,7 @@ namespace ShipyardMod.ItemClasses
             foreach (PacketItem packet in _packets)
             {
                 //thanks to Digi for showing me how this thing works
-                MyTransparentGeometry.AddPointBillboard(MyStringId.GetOrCompute("ShipyardPacket"), Color, packet.Position, 0.3f, packet.Ticks);
+                MyTransparentGeometry.AddPointBillboard(MyStringId.GetOrCompute("ScaffoldPacket"), Color, packet.Position, 0.3f, packet.Ticks);
             }
         }
 

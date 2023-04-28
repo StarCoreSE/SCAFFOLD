@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using Sandbox.ModAPI;
 
-namespace ShipyardMod.Utility
+namespace ScaffoldMod.Utility
 {
     internal class Logging
     {
@@ -37,7 +37,7 @@ namespace ShipyardMod.Utility
 
                 if (_instance == null)
                 {
-                    _instance = new Logging("ShipyardMod.log");
+                    _instance = new Logging("ScaffoldMod.log");
                 }
 
                 return _instance;
@@ -79,13 +79,13 @@ namespace ShipyardMod.Utility
 
         public void WriteDebug(string text)
         {
-            if (ShipyardCore.Debug)
+            if (ScaffoldCore.Debug)
                 WriteLine(text);
         }
 
         public void Debug_obj(string text)
         {
-            if (!ShipyardCore.Debug)
+            if (!ScaffoldCore.Debug)
                 return;
 
             WriteLine("\tDEBUG_OBJ: " + text);
@@ -103,7 +103,7 @@ namespace ShipyardMod.Utility
             if (!init)
             {
                 init = true;
-                MyAPIGateway.Utilities.GetObjectiveLine().Title = "Shipyard debug";
+                MyAPIGateway.Utilities.GetObjectiveLine().Title = "Scaffold debug";
                 MyAPIGateway.Utilities.GetObjectiveLine().Objectives.Clear();
                 MyAPIGateway.Utilities.GetObjectiveLine().Objectives.Add("Start");
                 MyAPIGateway.Utilities.GetObjectiveLine().Show();

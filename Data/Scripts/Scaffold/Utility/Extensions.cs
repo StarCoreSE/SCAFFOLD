@@ -11,7 +11,7 @@ using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
 
-namespace ShipyardMod.Utility
+namespace ScaffoldMod.Utility
 {
     public static class Extensions
     {

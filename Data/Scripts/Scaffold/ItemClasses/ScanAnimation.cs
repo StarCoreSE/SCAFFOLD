@@ -1,9 +1,9 @@
-﻿using ShipyardMod.Utility;
+﻿using ScaffoldMod.Utility;
 using VRage.Game;
 using VRage.Utils;
 using VRageMath;
 
-namespace ShipyardMod.ItemClasses
+namespace ScaffoldMod.ItemClasses
 {
     public class ScanAnimation
     {
@@ -14,15 +14,15 @@ namespace ShipyardMod.ItemClasses
         private readonly Vector4 _color = Color.Green.ToVector4();
         private readonly Vector3D[] _endpoints = new Vector3D[4];
 
-        private readonly ShipyardItem _shipyardItem;
+        private readonly ScaffoldItem _ScaffoldItem;
         private bool _init;
         private ScanLine _line;
         private bool _scanningZ = true;
         private int _ticks;
 
-        public ScanAnimation(ShipyardItem item)
+        public ScanAnimation(ScaffoldItem item)
         {
-            _shipyardItem = item;
+            _ScaffoldItem = item;
         }
 
         //    OBB corner structure
@@ -35,7 +35,7 @@ namespace ShipyardMod.ItemClasses
         private void Init()
         {
             var corners = new Vector3D[8];
-            _shipyardItem.ShipyardBox.GetCorners(corners, 0);
+            _ScaffoldItem.ScaffoldBox.GetCorners(corners, 0);
 
             //our endpoints are in the center of the faces
             //z plane
@@ -55,15 +55,15 @@ namespace ShipyardMod.ItemClasses
                     {
                         Origin = _endpoints[0],
                         //get half the dimensions for each face
-                        ZWidth = (float)_shipyardItem.ShipyardBox.HalfExtent.X,
-                        ZLength = (float)_shipyardItem.ShipyardBox.HalfExtent.Y,
-                        XWidth = (float)_shipyardItem.ShipyardBox.HalfExtent.X,
-                        XLength = (float)_shipyardItem.ShipyardBox.HalfExtent.Z,
-                        //we need the up and left vectors to align the billboard to the shipyard grid
-                        ZLeft = _shipyardItem.ShipyardBox.Orientation.Right,
-                        ZUp = -_shipyardItem.ShipyardBox.Orientation.Up,
-                        XLeft = -_shipyardItem.ShipyardBox.Orientation.Right,
-                        XUp = _shipyardItem.ShipyardBox.Orientation.Forward
+                        ZWidth = (float)_ScaffoldItem.ScaffoldBox.HalfExtent.X,
+                        ZLength = (float)_ScaffoldItem.ScaffoldBox.HalfExtent.Y,
+                        XWidth = (float)_ScaffoldItem.ScaffoldBox.HalfExtent.X,
+                        XLength = (float)_ScaffoldItem.ScaffoldBox.HalfExtent.Z,
+                        //we need the up and left vectors to align the billboard to the Scaffold grid
+                        ZLeft = _ScaffoldItem.ScaffoldBox.Orientation.Right,
+                        ZUp = -_ScaffoldItem.ScaffoldBox.Orientation.Up,
+                        XLeft = -_ScaffoldItem.ScaffoldBox.Orientation.Right,
+                        XUp = _ScaffoldItem.ScaffoldBox.Orientation.Forward
                     };
         }
 
@@ -72,7 +72,7 @@ namespace ShipyardMod.ItemClasses
             if (!Update())
                 return false;
 
-            //draw the texture oriented to the shipyard grid
+            //draw the texture oriented to the Scaffold grid
             if (_scanningZ)
                 MyTransparentGeometry.AddBillboardOriented(TextureId, _color, _line.Origin, _line.ZLeft, _line.ZUp, _line.ZWidth, _line.ZLength);
             else
