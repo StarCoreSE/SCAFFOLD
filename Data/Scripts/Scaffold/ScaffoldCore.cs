@@ -26,7 +26,6 @@ namespace ScaffoldMod
     {
         private const string Version = "v0.1";
 
-        //TODO
         public static volatile bool Debug = false;
 
         //private readonly List<Task> _tasks = new List<Task>();
@@ -64,176 +63,169 @@ namespace ScaffoldMod
 
         private void ShowLog()
         {
-            MyAPIGateway.Utilities.ShowMissionScreen("Scaffold Update", "", "July 2017",
-    @"Greetings engineers!
-
-The Scaffold mod has received a major update, fixing many bugs and bringing some exciting new features!
-
-I've fixed welding projections that are connected to the shiypard grid, fractional components, strange power use, graphical issues, various multithreading issues, and more.
-
-Along with the projection fixes, there's a new option in the terminal which allows you to select a build pattern for projections. This is mostly a visual thing, but the results are interesting enough that it's worth having the option.
-
-Power use has been rebalanced and reduced drastically. Component efficiency hasn't changed. As another balancing requirement, Scaffold corners now require a Targeting Computer component, which is built with Platinum.
-
-Most notably I've added a mobile version of the shiypard. It works the same as the normal fixed version, but requires much more power, and has a much lower component efficiency.
-
-Mobile Scaffolds include a slight tractor beam effect, helping your fighters match speed to the Scaffold so you can make repairs while under way, and also include an advanced locking feature.
-This feature will lock grids inside mobile Scaffolds, but will consume a lot of power to maintain if you are doing hard maneuvers.
-
-I hope you enjoy this update. Please visit the workshop and rate, subscribe, upvote, downvote, sing a jaunty tune, whatever it is that kids do these days.
-You can open the workshop page by sending '/Scaffold workshop' in chat.
-
-Happy engineering!
-
-<3 Rexxar");
+            MyAPIGateway.Utilities.ShowMissionScreen("Scaffold Update", "", "April",
+    @"RETURN OF THE KING
+t. invalid");
         }
 
         private void HandleMessageEntered(string messageText, ref bool sendToOthers)
         {
             string messageLower = messageText.ToLower();
-            
-            if (!messageLower.StartsWith("/Scaffold"))
-                return;
 
-            if (DateTime.Now - _lastMessageTime < TimeSpan.FromMilliseconds(200))
-                return;
-
-            if (messageLower.Equals("/Scaffold debug on"))
+            if (messageLower.StartsWith("/scaffold"))
             {
-                Logging.Instance.WriteLine("Debug turned on");
-                Debug = true;
+                if (DateTime.Now - _lastMessageTime >= TimeSpan.FromMilliseconds(200))
+                {
+                    _lastMessageTime = DateTime.Now;
+                    sendToOthers = false;
+
+                    switch (messageLower)
+                    {
+                        case "/scaffold debug on":
+                            Logging.Instance.WriteLine("Debug turned on");
+                            Debug = true;
+                            break;
+                        case "/scaffold debug off":
+                            Logging.Instance.WriteLine("Debug turned off");
+                            Debug = false;
+                            break;
+                        case "/scaffold new":
+                            ShowLog();
+                            break;
+                        case "/scaffold workshop":
+                            MyVisualScriptLogicProvider.OpenSteamOverlay(@"http://steamcommunity.com/sharedfiles/filedetails/?id=684618597");
+                            break;
+                        default:
+                            byte[] commandBytes = Encoding.UTF8.GetBytes(messageLower);
+                            byte[] idBytes = BitConverter.GetBytes(MyAPIGateway.Session.Player.SteamUserId);
+                            byte[] message = idBytes.Concat(commandBytes).ToArray();
+                            Communication.SendMessageToServer(Communication.MessageTypeEnum.ClientChat, message);
+                            break;
+                    }
+                }
             }
-            else if (messageLower.Equals("/Scaffold debug off"))
-            {
-                Logging.Instance.WriteLine("Debug turned off");
-                Debug = false;
-            }
-            else if (messageLower.Equals("/Scaffold new"))
-            {
-                sendToOthers = false;
-                ShowLog();
-                return;
-            }
-            else if (messageLower.Equals("/Scaffold workshop"))
-            {
-                MyVisualScriptLogicProvider.OpenSteamOverlay(@"http://steamcommunity.com/sharedfiles/filedetails/?id=684618597");
-                sendToOthers = false;
-                return;
-            }
-            _lastMessageTime = DateTime.Now;
-
-            sendToOthers = false;
-
-            byte[] commandBytes = Encoding.UTF8.GetBytes(messageLower);
-            byte[] idBytes = BitConverter.GetBytes(MyAPIGateway.Session.Player.SteamUserId);
-
-            var message = new byte[commandBytes.Length + sizeof(ulong)];
-
-            idBytes.CopyTo(message, 0);
-            commandBytes.CopyTo(message, idBytes.Length);
-
-            Communication.SendMessageToServer(Communication.MessageTypeEnum.ClientChat, message);
         }
 
         private void CalculateBoxesContaining()
         {
+            // Loop through each scaffold item in the local yards
             foreach (ScaffoldItem item in ProcessLocalYards.LocalYards)
             {
+                // Loop through each cube grid contained in the scaffold item
                 foreach (IMyCubeGrid grid in item.ContainsGrids)
                 {
+                    // If the scaffold item is disabled or the grid is closed or the guide is not enabled for the scaffold item
                     if (item.YardType != ScaffoldType.Disabled || grid.Closed || !ScaffoldSettings.Instance.GetYardSettings(item.EntityId).GuideEnabled)
                     {
+                        // Remove the grid from the dictionary and skip to the next grid
                         BoxDict.Remove(grid.EntityId);
                         continue;
                     }
-                    //if (BoxDict.ContainsKey(grid.EntityId) && Vector3D.DistanceSquared(BoxDict[grid.EntityId].LastPos, grid.GetPosition()) < 0.01)
-                    //    continue;
 
                     uint color;
 
+                    // If the grid has a physics object
                     if (grid.Physics != null)
+                        // Set the color to green
                         color = Color.Green.PackedValue;
                     else
                     {
                         var proj = grid.Projector();
 
-                        if (proj == null) //ghost grid like Digi's helmet
+                        // If the grid is a ghost grid (e.g. Digi's helmet)
+                        if (proj == null)
+                            // Skip to the next grid
                             continue;
 
-                        if (proj.RemainingBlocks == 0) //projection is complete
+                        // If the projection is complete
+                        if (proj.RemainingBlocks == 0)
+                            // Skip to the next grid
                             continue;
 
+                        // Set the color to cyan
                         color = Color.Cyan.PackedValue;
                     }
 
+                    // Add the grid to the dictionary with a new BoxItem
                     BoxDict[grid.EntityId] = new BoxItem
-                                             {
-                                                 Lines = MathUtility.CalculateObbLines(MathUtility.CreateOrientedBoundingBox(grid)),
-                                                 GridId = grid.EntityId,
-                                                 //PackedColor = grid.Physics == null ? Color.Cyan.PackedValue : Color.Green.PackedValue,
-                                                 PackedColor = color,
-                                                 LastPos = grid.GetPosition()
-                                             };
+                    {
+                        // Calculate the oriented bounding box lines for the grid
+                        Lines = MathUtility.CalculateObbLines(MathUtility.CreateOrientedBoundingBox(grid)),
+                        // Set the grid ID
+                        GridId = grid.EntityId,
+                        // Set the packed color based on whether the grid has a physics object or not
+                        PackedColor = color,
+                        // Set the last position of the grid
+                        LastPos = grid.GetPosition()
+                    };
                 }
             }
         }
 
         private void CalculateBoxesIntersecting()
         {
+            // loop through all local yards
             foreach (var item in ProcessLocalYards.LocalYards)
             {
+                // loop through all grids that intersect with the yard
                 foreach (IMyCubeGrid grid in item.IntersectsGrids)
                 {
+                    // check if the yard type is disabled or the grid is closed or the guide is disabled
                     if (item.YardType != ScaffoldType.Disabled || grid.Closed || !ScaffoldSettings.Instance.GetYardSettings(item.EntityId).GuideEnabled)
                     {
+                        // if any of the above conditions are met, remove the grid from the dictionary and continue to the next grid
                         BoxDict.Remove(grid.EntityId);
                         continue;
                     }
-                    //if (BoxDict.ContainsKey(grid.EntityId) && Vector3D.DistanceSquared(BoxDict[grid.EntityId].LastPos, grid.GetPosition()) < 0.01)
-                    //    continue;
 
+                    // determine the color of the grid box based on its properties
                     uint color;
-
                     if (grid.Physics != null)
                         color = Color.Yellow.PackedValue;
                     else
                     {
                         var proj = grid.Projector();
-
                         if (proj == null) //ghost grid like Digi's helmet
                             continue;
-
                         if (proj.RemainingBlocks == 0) //projection is complete
                             continue;
-
                         color = Color.CornflowerBlue.PackedValue;
                     }
 
+                    // create a new BoxItem object and add it to the dictionary with the grid entity ID as the key
                     BoxDict[grid.EntityId] = new BoxItem
-                                             {
-                                                 Lines = MathUtility.CalculateObbLines(MathUtility.CreateOrientedBoundingBox(grid)),
-                                                 GridId = grid.EntityId,
-                                                 //PackedColor = grid.Physics == null ? Color.CornflowerBlue.PackedValue : Color.Yellow.PackedValue,
-                                                 PackedColor = color,
-                                                 LastPos = grid.GetPosition()
-                                             };
+                    {
+                        Lines = MathUtility.CalculateObbLines(MathUtility.CreateOrientedBoundingBox(grid)),
+                        GridId = grid.EntityId,
+                        PackedColor = color,
+                        LastPos = grid.GetPosition()
+                    };
                 }
             }
         }
 
         private void CalculateLines()
         {
+            // Loop through all communication lines
             foreach (var e in Communication.LineDict)
             {
+                // Loop through all lines within this communication line
                 foreach (var line in e.Value)
                 {
+                    // Calculate the starting point of the line
                     line.Start = MathUtility.CalculateEmitterOffset(line.EmitterBlock, line.Index);
+
+                    // Get the target block of the line
                     var target = line.TargetGrid.GetCubeBlock(line.TargetBlock);
+
+                    // If the target block is null or closed, skip to the next line
                     if (target == null || target.Closed())
                         continue;
 
+                    // Calculate the end point of the line
                     line.End = target.GetPosition();
 
+                    // If line packets are available, update them with the new line coordinates
                     if (line.LinePackets != null)
                     {
                         line.LinePackets.Update(line.Start, line.End);
@@ -256,30 +248,27 @@ Happy engineering!
 
         public override void Draw()
         {
-            if (MyAPIGateway.Session?.Player == null || !_initialized)
-                return;
+            // If the player is not present or the mod is not initialized, return
+            if (MyAPIGateway.Session?.Player == null || !_initialized) return;
 
             try
             {
-                //these tasks are too simple to use Parallel.ForEach or similar in the body, but
-                //can all safely be run simultaneously, so do that.
-                var t1 = MyAPIGateway.Parallel.Start(CalculateBoxesContaining);
-                var t2 = MyAPIGateway.Parallel.Start(CalculateBoxesIntersecting);
-                var t3 = MyAPIGateway.Parallel.Start(CalculateLines);
-                //wait for all three to finish
-                t1.Wait();
-                t2.Wait();
-                t3.Wait();
-                DrawLines();
-                FadeLines();
-                DrawScanning();
+                // Run these three methods simultaneously
+                MyAPIGateway.Parallel.Start(CalculateBoxesContaining).Wait();
+                MyAPIGateway.Parallel.Start(CalculateBoxesIntersecting).Wait();
+                MyAPIGateway.Parallel.Start(CalculateLines).Wait();
+
+                // Draw lines, fade lines and draw scanning
+                DrawLines(); FadeLines(); DrawScanning();
             }
             catch (Exception ex)
             {
+                // Log any exception encountered during the draw update
                 Logging.Instance.WriteLine($"Draw(): {ex}");
                 MyLog.Default.WriteLineAndConsole("##Scaffold MOD: ENCOUNTERED ERROR DURING DRAW UPDATE. CHECK MOD LOG");
-                if (Debug)
-                    throw;
+
+                // If debug is enabled, throw the exception
+                if (Debug) throw;
             }
         }
 
@@ -287,24 +276,24 @@ Happy engineering!
         {
             try
             {
-                if (MyAPIGateway.Session == null)
-                    return;
+                // Return if no session is available
+                if (MyAPIGateway.Session == null) return;
 
-                if (!_initialized)
-                {
-                    _initialized = true;
-                    Initialize();
-                }
-                
+                // Run initialization if not already initialized
+                if (!_initialized) { _initialized = true; Initialize(); }
+
+                // Run process handlers
                 RunProcessHandlers();
 
+                // Loop through scaffold detection list
                 foreach (var item in ProcessScaffoldDetection.ScaffoldsList)
                 {
+                    // Stop grids if they are static yards
                     if (item.StaticYard)
                     {
-                        foreach (IMyCubeGrid yardGrid in item.YardGrids)
-                            yardGrid.Stop();
+                        foreach (IMyCubeGrid yardGrid in item.YardGrids) yardGrid.Stop();
                     }
+                    // Otherwise update position and nudge grids
                     else
                     {
                         item.UpdatePosition();
@@ -312,55 +301,71 @@ Happy engineering!
                     }
                 }
 
+                // Loop through local yards and update their positions
                 foreach (var item in ProcessLocalYards.LocalYards)
                 {
-                    if (!item.StaticYard)
-                        item.UpdatePosition();
+                    if (!item.StaticYard) item.UpdatePosition();
                 }
 
-                if (_updateCount++ % 10 != 0)
-                    return;
+                // Only execute every 10 updates
+                if (_updateCount++ % 10 != 0) return;
 
+                // Check and damage player, process action queue
                 CheckAndDamagePlayer();
                 Utilities.ProcessActionQueue();
 
-                if (Debug)
-                    Profiler.Save();
+                // Save profiler data if in debug mode
+                if (Debug) Profiler.Save();
             }
             catch (Exception ex)
             {
+                // Log error and throw exception in debug mode
                 Logging.Instance.WriteLine($"UpdateBeforeSimulation(): {ex}");
                 MyLog.Default.WriteLineAndConsole("##Scaffold MOD: ENCOUNTERED ERROR DURING MOD UPDATE. CHECK MOD LOG");
-                if (Debug)
-                    throw;
+                if (Debug) throw;
             }
         }
 
         private void CheckAndDamagePlayer()
         {
+            // Get the player's character entity
             var character = MyAPIGateway.Session.Player?.Controller?.ControlledEntity?.Entity as IMyCharacter;
 
+            // If the character is null, exit the method
             if (character == null)
                 return;
 
+            // Start measuring the time taken by this method
             var damageBlock = Profiler.Start("0.ScaffoldMod.ScaffoldCore", nameof(CheckAndDamagePlayer));
+
+            // Get the bounding box of the character's world
             BoundingBoxD charbox = character.WorldAABB;
 
+            // Loop through all the LineItems in the Communication.LineDict
             MyAPIGateway.Parallel.ForEach(Communication.LineDict.Values.ToArray(), lineList =>
-                                                                                   {
-                                                                                       foreach (LineItem line in lineList)
-                                                                                       {
-                                                                                           var ray = new Ray(line.Start, line.End - line.Start);
-                                                                                           double? intersection = charbox.Intersects(ray);
-                                                                                           if (intersection.HasValue)
-                                                                                           {
-                                                                                               if (Vector3D.DistanceSquared(charbox.Center, line.Start) < Vector3D.DistanceSquared(line.Start, line.End))
-                                                                                               {
-                                                                                                   Utilities.Invoke(() => character.DoDamage(5, MyStringHash.GetOrCompute("WeaponLaser"), true));
-                                                                                               }
-                                                                                           }
-                                                                                       }
-                                                                                   });
+            {
+                foreach (LineItem line in lineList)
+                {
+                    // Create a ray from the LineItem's start to end point
+                    var ray = new Ray(line.Start, line.End - line.Start);
+
+                    // Check if the ray intersects with the character's bounding box
+                    double? intersection = charbox.Intersects(ray);
+
+                    // If the ray intersects the bounding box
+                    if (intersection.HasValue)
+                    {
+                        // Check if the character is closer to the start point than the end point
+                        if (Vector3D.DistanceSquared(charbox.Center, line.Start) < Vector3D.DistanceSquared(line.Start, line.End))
+                        {
+                            // Damage the character with 5 points and mark the damage as done by a laser weapon
+                            Utilities.Invoke(() => character.DoDamage(5, MyStringHash.GetOrCompute("WeaponLaser"), true));
+                        }
+                    }
+                }
+            });
+
+            // Stop measuring the time taken by this method
             damageBlock.End();
         }
 
@@ -411,72 +416,100 @@ Happy engineering!
 
         private void DrawScanning()
         {
-            var toRemove = new List<ScanAnimation>();
+            // Create a new list to store animations that need to be removed
+            var removeList = new List<ScanAnimation>();
+
+            // Loop through all animations in the scan list
             foreach (ScanAnimation animation in Communication.ScanList)
             {
+                // Check if the animation needs to be drawn
                 if (!animation.Draw())
-                    toRemove.Add(animation);
+                    // If not, add it to the remove list
+                    removeList.Add(animation);
             }
 
-            foreach (ScanAnimation removeAnim in toRemove)
-                Communication.ScanList.Remove(removeAnim);
+            // Loop through all animations in the remove list
+            foreach (ScanAnimation animationToRemove in removeList)
+            {
+                // Remove the animation from the scan list
+                Communication.ScanList.Remove(animationToRemove);
+            }
         }
 
         private void DrawLines()
         {
+            // Loop through all line items in the Communication.LineDict dictionary
             foreach (KeyValuePair<long, List<LineItem>> kvp in Communication.LineDict)
             {
                 foreach (LineItem line in kvp.Value)
                 {
+                    // If the line's start point is in the Communication.FadeList, skip it
                     if (Communication.FadeList.Any(x => x.Start == line.Start))
                         continue;
 
+                    // If the line has a pulse effect, draw it and move to the next line
                     if (line.Pulse)
                     {
                         PulseLines(line);
                         continue;
                     }
 
+                    // If the line has any packets, draw them
                     line.LinePackets?.DrawPackets();
 
+                    // Draw the line using the MySimpleObjectDraw.DrawLine method
                     MySimpleObjectDraw.DrawLine(line.Start, line.End, MyStringId.GetOrCompute("ScaffoldLaser"), ref line.Color, 0.4f);
                 }
             }
 
+            // Loop through all box items in the BoxDict dictionary
             foreach (KeyValuePair<long, BoxItem> entry in BoxDict)
             {
                 BoxItem box = entry.Value;
                 Vector4 color = new Color(box.PackedColor).ToVector4();
+
+                // Loop through all line items in the current box's Lines list
                 foreach (LineItem line in box.Lines)
                 {
+                    // Draw the line using the MySimpleObjectDraw.DrawLine method
                     MySimpleObjectDraw.DrawLine(line.Start, line.End, MyStringId.GetOrCompute("ScaffoldGizmo"), ref color, 1f);
                 }
             }
 
+            // Loop through all ScaffoldItems in the ProcessLocalYards.LocalYards list
             foreach (ScaffoldItem item in ProcessLocalYards.LocalYards)
             {
                 Vector4 color = Color.White;
+
+                // If the current ScaffoldItem has a disabled or invalid YardType, skip it
                 if (item.YardType == ScaffoldType.Disabled || item.YardType == ScaffoldType.Invalid)
                     continue;
 
+                // Loop through all line items in the current ScaffoldItem's BoxLines list
                 foreach (LineItem line in item.BoxLines)
                 {
+                    // Draw the line using the MySimpleObjectDraw.DrawLine method
                     MySimpleObjectDraw.DrawLine(line.Start, line.End, MyStringId.GetOrCompute("WeaponLaserIgnoreDepth"), ref color, 1f);
                 }
             }
         }
 
+        // PulseLines method that takes a LineItem object as a parameter
         private void PulseLines(LineItem item)
         {
-            if (item.Descend)
-                item.PulseVal -= 0.025;
-            else
-                item.PulseVal += 0.025;
+            // If the LineItem should descend, decrease the pulse value by 0.025, otherwise increase it
+            item.PulseVal += item.Descend ? -0.025 : 0.025;
 
+            // Set the drawColor to the LineItem's color
             Vector4 drawColor = item.Color;
+
+            // Calculate the drawColor's opacity using the sine function and the pulse value
             drawColor.W = (float)((Math.Sin(item.PulseVal) + 1) / 2);
-            if (drawColor.W <= 0.05)
-                item.Descend = !item.Descend;
+
+            // If the drawColor's opacity is less than or equal to 0.05, change the LineItem's direction
+            if (drawColor.W <= 0.05) item.Descend = !item.Descend;
+
+            // Draw the LineItem using MySimpleObjectDraw.DrawLine with a laser texture and the calculated drawColor
             MySimpleObjectDraw.DrawLine(item.Start, item.End, MyStringId.GetOrCompute("ScaffoldLaser"), ref drawColor, drawColor.W * 0.4f);
         }
 
@@ -504,30 +537,33 @@ Happy engineering!
                 Communication.FadeList.Remove(removeLine);
             }
         }
-        
+
+        // This method is called when the mod is unloaded
         protected override void UnloadData()
         {
-            try
-            {
-                Utilities.SessionClosing = true;
+            // Set a flag to indicate that the session is closing
+            Utilities.SessionClosing = true;
 
-                if (Utilities.AbortAllTasks())
-                    Logging.Instance.WriteDebug("CAUGHT AND ABORTED TASK!!!!");
+            // Abort all tasks and log a message if any task is aborted
+            if (Utilities.AbortAllTasks()) Logging.Instance.WriteDebug("CAUGHT AND ABORTED TASK!!!!");
 
-                RemoveMessageHandler();
+            // Remove the message handler for the mod
+            RemoveMessageHandler();
 
-                if (Logging.Instance != null)
-                    Logging.Instance.Close();
+            // Close the logging instance if it exists
+            if (Logging.Instance != null) Logging.Instance.Close();
 
-                Communication.UnregisterHandlers();
+            // Unregister communication handlers for the mod
+            Communication.UnregisterHandlers();
 
-                foreach (ScaffoldItem yard in ProcessScaffoldDetection.ScaffoldsList.ToArray())
-                    yard.Disable(false);
-            }
-            catch
-            {
-                //ignore errors on session close
-            }
+            // Disable all scaffolds in the scaffolds list
+            foreach (ScaffoldItem yard in ProcessScaffoldDetection.ScaffoldsList.ToArray())
+                yard.Disable(false);
+
+            // Ignore any errors that occur during session close
+            // Note: This is not good practice, but it is being done here to prevent the mod from crashing during shutdown
+            // Ideally, all errors should be handled properly
+            try { } catch { }
         }
     }
 }
