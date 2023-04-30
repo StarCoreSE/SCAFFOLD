@@ -75,7 +75,7 @@ namespace ScaffoldMod.ProcessHandlers
                 using (Profiler.Start(FullName, nameof(Handle), "Physics Check"))
                 {
                     if (item.YardEntity.Physics == null 
-                        || item.StaticYard && (!item.YardEntity.Physics.IsStatic || !((IMyCubeGrid)item.YardEntity).IsInVoxels()))
+                        || item.StaticYard && (!item.YardEntity.Physics.IsStatic))
                     {
                         Logging.Instance.WriteLine("remove item physics");
                         itemsToRemove.Add(item);
@@ -145,7 +145,7 @@ namespace ScaffoldMod.ProcessHandlers
                 {
                     if (_corners[0].BlockDefinition.SubtypeId == "ScaffoldCorner_Large" && !ScaffoldCore.Debug)
                     {
-                        if (!grid.IsStatic || !grid.IsInVoxels())
+                        if (!grid.IsStatic)
                         {
                             Logging.Instance.WriteDebug($"Yard {grid.EntityId} failed: Static check");
                             foreach (var tool in _corners)
