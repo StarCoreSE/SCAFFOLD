@@ -668,8 +668,8 @@ namespace ShipyardMod.ProcessHandlers
                                                      continue;
                                                  }
 
-                                                 if (!MyAPIGateway.Session.CreativeMode)
-                                                 {
+                                           //      if (MyAPIGateway.Session.CreativeMode)
+                                            //     {
                                                      /*
                                                       * Welding laser "efficiency" is a float between 0-1 where:
                                                       *   0.0 =>   0% of component stock used for construction (100% loss)
@@ -758,7 +758,7 @@ namespace ShipyardMod.ProcessHandlers
                                                      target.Block.IncreaseMountLevel(weldAmount, 0, welderInventory, boneAmount, true);
                                                      if (target.Block.IsFullIntegrity && !target.Block.HasDeformation)
                                                          targetsToRemove.Add(target);
-                                                 }
+                                            //     }
                                                  i++;
                                              }
                                          }
