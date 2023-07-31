@@ -150,24 +150,10 @@ namespace ShipyardMod.Utility
 
         public static bool IsInVoxels(this IMyCubeGrid grid)
         {
+            /*
             if (MyAPIGateway.Session.SessionSettings.StationVoxelSupport)
                 return grid.IsStatic;
 
-            // bool result = false;
-            /*Utilities.InvokeBlocking(() =>
-                                     {
-
-                                         foreach (var block in blocks)
-                                         {
-                                             //TODO: this is horribly, horribly slow. Must revisit the commented code further down
-                                             if (MyCubeGrid.IsInVoxels(((MyCubeGrid)grid).GetCubeBlock(block.Position)))
-                                             {
-                                                 result = true;
-                                                 return;
-                                             }
-                                         }
-                                     });
-            */
 
             List<IMySlimBlock> blocks = new List<IMySlimBlock>();
             List<IMyEntity> entities = new List<IMyEntity>();
@@ -198,8 +184,9 @@ namespace ShipyardMod.Utility
                     }
                 }
             }
+            */
+            return true;
 
-            return false;
         }
     }
 }
